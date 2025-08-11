@@ -1,0 +1,91 @@
+Node.js:
+  category: Runtimes
+  description: Ambiente de execução JavaScript Node.js (LTS)
+  download_url: https://nodejs.org/dist/v20.12.2/node-v20.12.2-x64.msi
+  install_method: msi
+  install_args: /qn /norestart
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+  - type: command_exists
+    name: node
+  - type: command_exists
+    name: npm
+Python:
+  category: Runtimes
+  description: Linguagem de programação Python (3.12+)
+  download_url: https://www.python.org/ftp/python/3.12.2/python-3.12.2-amd64.exe
+  install_method: exe
+  install_args: /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+  - type: command_exists
+    name: python
+  - type: command_exists
+    name: python3
+  - type: command_exists
+    name: py
+  - type: command_output
+    command: python --version
+    expected_contains: Python 3.
+    description: Verifica versão do Python
+Java Runtime Environment:
+  category: Runtimes
+  description: Java Development Kit (JDK) 21 via Chocolatey
+  install_method: chocolatey
+  package_name: temurin21
+  verify_actions:
+  - type: command_exists
+    name: java
+  - type: command_exists
+    name: javac
+  environment_variables:
+    JAVA_HOME: '%ProgramFiles%\Eclipse Adoptium\jdk-21.0.6.7-hotspot'
+  post_install_commands:
+  - refreshenv
+  - setx JAVA_HOME "%ProgramFiles%\Eclipse Adoptium\jdk-21.0.5.11-hotspot" /M
+  - setx PATH "%PATH%;%JAVA_HOME%\bin" /M
+Make:
+  category: Runtimes
+  description: GNU Make para Windows
+  download_url: file://F:/Projetos/env_dev/downloads/make-3.81-bin.zip
+  install_method: archive
+  extract_path: F:\Projetos\env_dev\tools\make
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+  - type: command_exists
+    name: make
+  - type: file_exists
+    path: F:\Projetos\env_dev\tools\make\bin\make.exe
+  environment_variables:
+    PATH: F:\Projetos\env_dev\tools\make\bin
+PowerShell Preview:
+  category: Runtimes
+  description: PowerShell Core Preview (versão de desenvolvimento)
+  download_url: https://github.com/PowerShell/PowerShell/releases
+  install_method: manual
+  notes: Instalação manual via GitHub releases
+  verify_actions:
+  - type: command_exists
+    name: pwsh-preview
+  - type: file_exists
+    path: C:\Program Files\PowerShell\7-preview\pwsh.exe
+  - type: command_output
+    command: pwsh-preview -Command "$PSVersionTable.PSVersion"
+    expected_contains: preview
+    description: Verifica se é versão preview
+Python 3.13:
+  category: Runtimes
+  description: Python 3.13 (versão específica)
+  download_url: https://www.python.org/downloads/release/python-3132/
+  install_method: manual
+  notes: Versão específica do Python 3.13
+  verify_actions:
+  - type: command_output
+    command: python --version
+    expected_contains: Python 3.13
+    description: Verifica se é Python 3.13
+  - type: command_exists
+    name: python3.13

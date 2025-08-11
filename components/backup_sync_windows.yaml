@@ -1,0 +1,31 @@
+CCleaner:
+  category: Backup & Sync (Windows)
+  description: Ferramenta para limpeza de arquivos temporários e otimização
+  download_url: https://www.ccleaner.com/ccleaner/download/standard
+  install_method: none
+  post_install_message: Acesse https://www.ccleaner.com/ccleaner/download/standard
+    para baixar e instalar o CCleaner manualmente.
+FreeFileSync:
+  category: Backup & Sync (Windows)
+  description: Ferramenta para comparação e sincronização de pastas
+  download_url: https://freefilesync.org/download.php
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_args: /S
+  install_method: exe
+  verify_actions:
+  - path: C:\Program Files\FreeFileSync\FreeFileSync.exe
+    type: file_exists
+WinDirStat:
+  alternative_urls:
+  - https://github.com/shanselman/windirstat/releases/latest
+  category: Backup & Sync (Windows)
+  description: Analisador e visualizador de uso de disco
+  download_url: https://sourceforge.net/projects/windirstat/files/latest/download
+  hash: HASH_NEEDS_UPDATE
+  hash_algorithm: sha256
+  install_args: /S
+  install_method: exe
+  verify_actions:
+  - path: C:\Program Files (x86)\WinDirStat\windirstat.exe
+    type: file_exists

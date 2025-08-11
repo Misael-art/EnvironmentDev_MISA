@@ -1,0 +1,93 @@
+Citra (Windows):
+  alternative_urls:
+  - https://github.com/PabloMK7/citra/releases/latest
+  category: Emulators (Windows)
+  dependencies:
+  - 7-Zip
+  description: Emulador de Nintendo 3DS para Windows
+  download_url: https://github.com/PabloMK7/citra/releases/latest/download/citra-windows-msvc.zip
+  extract_path: ${env:ProgramFiles}\Citra
+  hash: HASH_NEEDS_UPDATE
+  hash_algorithm: sha256
+  install_method: archive
+  notes: Projeto original descontinuado, usando fork do PabloMK7
+  verify_actions:
+  - path: ${env:ProgramFiles}\Citra\citra-qt.exe
+    type: file_exists
+Dolphin Emulator (Windows):
+  category: Emulators (Windows)
+  description: Emulador de GameCube e Wii para Windows
+  download_url: https://dl-mirror.dolphin-emu.org/5.0/dolphin-x64-5.0.exe
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_args: /S
+  install_method: exe
+  verify_actions:
+  - path: C:\Program Files\Dolphin\Dolphin.exe
+    type: file_exists
+LaunchBox:
+  category: Emulators (Windows)
+  description: Gerenciador e frontend para jogos retro e emuladores
+  install_method: none
+  post_install_message: Acesse https://www.launchbox-app.com/download para baixar
+    e instalar o LaunchBox manualmente.
+  verify_actions:
+  - path: ${env:ProgramFiles(x86)}\LaunchBox\LaunchBox.exe
+    type: file_exists
+PCSX2 (Windows):
+  category: Emulators (Windows)
+  dependencies:
+  - 7-Zip
+  description: Emulador de PlayStation 2 para Windows
+  download_url: https://github.com/PCSX2/pcsx2/releases/latest/download/pcsx2-v2.0.2-windows-x64-Qt.7z
+  extract_path: ${env:ProgramFiles}\PCSX2
+  hash: HASH_NEEDS_UPDATE
+  hash_algorithm: sha256
+  install_method: archive
+  verify_actions:
+  - path: ${env:ProgramFiles}\PCSX2\pcsx2.exe
+    type: file_exists
+RPCS3 (Windows):
+  category: Emulators (Windows)
+  dependencies:
+  - 7-Zip
+  description: Emulador de PlayStation 3 para Windows
+  download_url: https://github.com/RPCS3/rpcs3-binaries-win/releases/latest/download/rpcs3-v0.0.32-16445-4d5ff071_win64.7z
+  extract_path: ${env:ProgramFiles}\RPCS3
+  hash: HASH_NEEDS_UPDATE
+  hash_algorithm: sha256
+  install_method: archive
+  verify_actions:
+  - path: ${env:ProgramFiles}\RPCS3\rpcs3.exe
+    type: file_exists
+RetroArch (Windows):
+  alternative_urls:
+  - https://www.retroarch.com/index.php?page=platforms
+  category: Emulators (Windows)
+  dependencies:
+  - 7-Zip
+  description: Frontend universal para emuladores (versão Windows)
+  download_url: https://buildbot.libretro.com/stable/1.19.1/windows/x86_64/RetroArch.7z
+  extract_path: ${env:ProgramFiles}\RetroArch
+  hash: HASH_NEEDS_UPDATE
+  hash_algorithm: sha256
+  install_method: archive
+  verify_actions:
+  - path: ${env:ProgramFiles}\RetroArch\retroarch.exe
+    type: file_exists
+Yuzu (Windows):
+  alternative_urls:
+  - https://github.com/suyu-emu/suyu/releases/latest
+  category: Emulators (Windows)
+  dependencies:
+  - 7-Zip
+  description: 'Emulador de Nintendo Switch para Windows (Nota: Desenvolvimento encerrado)'
+  download_url: https://github.com/suyu-emu/suyu/releases/latest/download/suyu-windows-msvc.zip
+  extract_path: ${env:ProgramFiles}\Yuzu
+  hash: HASH_NEEDS_UPDATE
+  hash_algorithm: sha256
+  install_method: archive
+  notes: Projeto original descontinuado, usando fork Suyu
+  verify_actions:
+  - path: ${env:ProgramFiles}\Yuzu\yuzu.exe
+    type: file_exists

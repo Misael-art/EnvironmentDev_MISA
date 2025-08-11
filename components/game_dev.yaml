@@ -1,0 +1,46 @@
+# Ferramentas de Desenvolvimento de Jogos para Environment Dev Script
+# Este arquivo contém componentes relacionados a desenvolvimento de jogos
+
+Unity Hub:
+  category: Game Development
+  description: Gerenciador de instalações e projetos Unity
+  download_url: https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe
+  install_method: exe
+  install_args: /S
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\Unity Hub\Unity Hub.exe'
+
+# Definição movida para game_launchers.yaml e renomeada para "Epic Games Launcher"
+
+Blender:
+  category: Graphics
+  description: Software 3D gratuito e de código aberto
+  download_url: https://download.blender.org/release/Blender4.0/blender-4.0.2-windows-x64.msi
+  install_method: msi
+  install_args: /quiet /norestart
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\Blender Foundation\Blender 4.0\blender.exe'
+      alternative_paths:
+        - 'C:\Program Files\Blender Foundation\Blender 4.1\blender.exe'
+        - 'C:\Program Files\Blender Foundation\Blender 3.6\blender.exe'
+      search_pattern: 'C:\Program Files\Blender Foundation\Blender*\blender.exe'
+
+NVIDIA Game Ready Driver:
+  category: Graphics
+  description: Driver NVIDIA otimizado para jogos
+  download_url: https://us.download.nvidia.com/Windows/546.33/546.33-desktop-win10-win11-64bit-international-dch-whql.exe
+  install_method: exe
+  install_args: -s -noreboot
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\NVIDIA Corporation\NVSMI\nvidia-smi.exe'
+
+# Definição movida para game_launchers.yaml

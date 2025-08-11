@@ -1,0 +1,183 @@
+Cursor IDE:
+  alternative_urls:
+  - https://cursor.sh/download
+  category: Editors
+  description: IDE focado em IA, fork do VSCode
+  download_url: https://download.cursor.sh/windows/nsis/x64
+  hash: HASH_NEEDS_UPDATE
+  hash_algorithm: sha256
+  install_args: /S
+  install_method: exe
+  verify_actions:
+  - path: ${env:LOCALAPPDATA}\Programs\Cursor\Cursor.exe
+    type: file_exists
+Visual Studio Code:
+  category: Editors
+  dependencies: []
+  description: IDE leve e poderoso da Microsoft (versão estável)
+  download_url: https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_args: /VERYSILENT /MERGETASKS=!runcode
+  install_method: exe
+  verify_actions:
+  - path: ${env:LOCALAPPDATA}\Programs\Microsoft VS Code\Code.exe
+    type: file_exists
+    alternative_paths:
+      - 'C:\Program Files\Microsoft VS Code\Code.exe'
+      - '${env:ProgramFiles}\Microsoft VS Code\Code.exe'
+    search_pattern: '*\Microsoft VS Code\Code.exe'
+Visual Studio Code Insiders:
+  category: Editors
+  description: Versão de pré-lançamento do VSCode
+  download_url: https://code.visualstudio.com/sha/download?build=insider&os=win32-x64-user
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_args: /VERYSILENT /MERGETASKS=!runcode
+  install_method: exe
+  verify_actions:
+  - path: ${env:LOCALAPPDATA}\Programs\Microsoft VS Code Insiders\Code - Insiders.exe
+    type: file_exists
+
+TRAE AI IDE:
+  category: Editors
+  description: IDE colaborativo com IA integrada - o mundo's melhor IDE para desenvolvimento com IA
+  download_url: https://www.trae.ai/
+  install_method: manual
+  alternative_urls:
+  - https://www.trae.ai/download
+  notes: |
+    TRAE é um IDE revolucionário que integra IA em todo o ciclo de desenvolvimento.
+    Recursos principais:
+    - Modo SOLO: IA autônoma para desenvolvimento completo
+    - Modo IDE: Colaboração tradicional com IA
+    - Context Engineer integrado
+    - Agentes customizáveis
+    - Deploy automático
+  verify_actions:
+  - path: ${env:LOCALAPPDATA}\Programs\TRAE\TRAE.exe
+    type: file_exists
+  - path: ${env:ProgramFiles}\TRAE\TRAE.exe
+    type: file_exists
+  post_install_message: |
+    Acesse https://www.trae.ai/ para download e instalação.
+    TRAE oferece desenvolvimento colaborativo com IA avançada.
+
+Qwen Code:
+  category: Editors
+  description: Ferramenta CLI de workflow de IA otimizada para modelos Qwen3-Coder
+  download_url: https://github.com/QwenLM/qwen-code.git
+  install_method: npm
+  package_name: "@qwen-code/qwen-code@latest"
+  dependencies:
+  - Node.js
+  notes: |
+    Qwen Code é uma ferramenta de linha de comando poderosa para workflows de IA.
+    Recursos principais:
+    - Compreensão e edição de código além dos limites de contexto
+    - Automação de workflows (PRs, rebases complexos)
+    - Parser otimizado para modelos Qwen-Coder
+    - Gerenciamento de sessão com controle de tokens
+    - Suporte a múltiplos provedores de API
+  verify_actions:
+  - type: command_exists
+    name: qwen
+  - type: command_output
+    command: qwen --version
+    expected_contains: qwen-code
+    description: Verifica instalação do Qwen Code
+  post_install_commands:
+  - npm install -g @qwen-code/qwen-code@latest
+  environment_setup:
+    required_vars:
+    - OPENAI_API_KEY
+    - OPENAI_BASE_URL
+    - OPENAI_MODEL
+    optional_vars:
+    - QWEN_SESSION_TOKEN_LIMIT
+
+Vibe Kanban:
+  category: Editors
+  description: Quadro Kanban para gerenciar agentes de codificação IA (Claude Code, Gemini CLI, etc.)
+  download_url: https://github.com/BloopAI/vibe-kanban.git
+  install_method: npm
+  package_name: vibe-kanban
+  dependencies:
+  - Node.js
+  notes: |
+    Vibe Kanban otimiza o trabalho com agentes de codificação IA.
+    Recursos principais:
+    - Alternância fácil entre diferentes agentes de codificação
+    - Orquestração de múltiplos agentes em paralelo/sequência
+    - Revisão rápida de trabalho e inicialização de servidores dev
+    - Rastreamento de status de tarefas dos agentes IA
+    - Configuração centralizada de agentes MCP
+  verify_actions:
+  - type: command_exists
+    name: npx
+  - type: command_output
+    command: npx vibe-kanban --version
+    expected_contains: vibe-kanban
+    description: Verifica instalação do Vibe Kanban
+  post_install_commands:
+  - npx vibe-kanban
+  supported_agents:
+  - Claude Code
+  - Gemini CLI
+  - Codex
+  - Amp
+  - Outros agentes de codificação IA
+  environment_setup:
+    optional_vars:
+    - GITHUB_CLIENT_ID
+    - POSTHOG_API_KEY
+    - POSTHOG_API_ENDPOINT
+    - BACKEND_PORT
+    - FRONTEND_PORT
+    - HOST
+
+
+WinScript:
+  category: Editors
+  description: Ferramenta open-source para personalização do Windows - debloat, privacidade, performance e instalação de apps
+  download_url: https://github.com/flick9000/winscript.git
+  install_method: git
+  alternative_urls:
+  - https://winscript.cc/
+  dependencies:
+  - Git
+  notes: |
+    WinScript é uma ferramenta poderosa e leve para melhorar e personalizar sua experiência no Windows.
+    Recursos principais:
+    🧹 Debloat: Remove bloatware e componentes desnecessários do Windows
+    🔒 Privacidade: Desabilita coleta de dados e telemetria
+    ⚡ Performance: Otimizações de desempenho e configurações avançadas
+    📦 App Installer: Instalação em lote de software essencial via Chocolatey/Winget
+    
+    ATENÇÃO: Deve ser executado como Administrador para funcionar corretamente.
+  verify_actions:
+  - type: directory_exists
+    path: ${env:USERPROFILE}\winscript
+  - type: file_exists
+    path: ${env:USERPROFILE}\winscript\winscript.ps1
+  post_install_commands:
+  - git clone https://github.com/flick9000/winscript.git
+  launch_commands:
+  - irm "https://winscript.cc/irm" | iex
+  - winget install winscript
+  supported_package_managers:
+  - Chocolatey
+  - Winget
+  features:
+  - Debloat Windows
+  - Privacy enhancements
+  - Performance optimization
+  - Bulk app installation
+  - Microsoft Store removal
+  - OneDrive removal
+  - Edge debloating
+  - Telemetry disabling
+  environment_setup:
+    required_permissions:
+    - Administrator
+  license: GPL v3

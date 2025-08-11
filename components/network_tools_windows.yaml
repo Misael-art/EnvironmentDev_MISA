@@ -1,0 +1,29 @@
+# Ferramentas de Rede (Windows)
+
+NetLimiter:
+  category: Network Tools (Windows)
+  description: Monitora e controla o tráfego de rede por aplicativo
+  # Link da página oficial, requer download manual
+  download_url: https://www.netlimiter.com/products/nl4
+  install_method: none
+  post_install_message: "Acesse https://www.netlimiter.com/products/nl4 para baixar e instalar o NetLimiter manualmente."
+  # install_args removido
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\Locktime Software\NetLimiter\NLClientApp.exe'
+
+Wireshark:
+  category: Network Tools (Windows)
+  description: Analisador de protocolos de rede
+  # Link para versão estável 64-bit
+  download_url: https://1.na.dl.wireshark.org/win64/Wireshark-4.2.4-x64.exe
+  install_method: exe
+  # Argumentos para instalação silenciosa, incluindo Npcap se necessário
+  install_args: /S /NCRC /DesktopIcon=no /QuickLaunchIcon=no # Exemplo
+  # Npcap é geralmente incluído, mas pode ser uma dependência separada se necessário
+  # dependencies: [Npcap] 
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\Wireshark\Wireshark.exe'

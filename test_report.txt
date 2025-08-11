@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-08-09T10:36:29.983247",
+  "project_root": "C:\\Users\\misae\\Desktop\\EnvironmentDev_MISA",
+  "test_summary": {
+    "total_tests": 171,
+    "passed_tests": 171,
+    "failed_tests": 0,
+    "skipped_tests": 0,
+    "success_rate": 100.0,
+    "execution_time": 11.304274
+  },
+  "coverage": {
+    "percentage": 18.0,
+    "html_report": "C:\\Users\\misae\\Desktop\\EnvironmentDev_MISA\\coverage\\html\\index.html",
+    "xml_report": "C:\\Users\\misae\\Desktop\\EnvironmentDev_MISA\\coverage\\coverage.xml"
+  },
+  "errors": []
+}

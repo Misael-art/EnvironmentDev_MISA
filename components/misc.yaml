@@ -1,0 +1,42 @@
+# Componentes Diversos para Environment Dev Script
+# Este arquivo contém componentes que não se encaixam em outras categorias
+
+K-Lite Codec Pack:
+  category: Multimedia
+  description: Pacote de codecs de áudio e vídeo
+  download_url: https://files3.codecguide.com/K-Lite_Codec_Pack_1818_Standard.exe
+  install_method: exe
+  install_args: /VERYSILENT /NORESTART
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: directory_exists
+      path: 'C:\Program Files (x86)\K-Lite Codec Pack'
+
+PowerToys:
+  category: Productivity
+  description: Utilitários avançados da Microsoft para Windows
+  download_url: https://github.com/microsoft/PowerToys/releases/download/v0.83.0/PowerToysSetup-0.83.0-x64.exe
+  install_method: exe
+  install_args: -silent
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\PowerToys\PowerToys.exe'
+
+# Definição movida para common_utils.yaml
+
+# Definição movida para backup_sync_windows.yaml
+
+VcXsrv:
+  category: Utilities
+  description: Servidor X para Windows (útil para WSL)
+  download_url: https://sourceforge.net/projects/vcxsrv/files/latest/download
+  install_method: exe
+  install_args: /silent
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\VcXsrv\vcxsrv.exe' 

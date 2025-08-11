@@ -1,0 +1,132 @@
+# Ferramentas de Comunicação e Produtividade
+# Este arquivo contém componentes relacionados a comunicação, produtividade e colaboração
+
+Discord:
+  category: Communication
+  description: Plataforma de comunicação para comunidades e gaming
+  download_url: https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64
+  install_method: exe
+  install_args: -s
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Local\Discord\Update.exe'
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Roaming\Discord\Discord.exe'
+    - type: registry_key_exists
+      hive: HKCU
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Discord
+      description: Verifica registro de instalação do Discord
+
+Slack:
+  category: Communication
+  description: Plataforma de colaboração empresarial
+  download_url: https://downloads.slack-edge.com/releases/windows/4.36.140/prod/x64/SlackSetup.exe
+  install_method: exe
+  install_args: --silent
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Local\slack\slack.exe'
+    - type: registry_key_exists
+      hive: HKCU
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\slack
+      description: Verifica registro de instalação do Slack
+
+Microsoft Teams:
+  category: Communication
+  description: Plataforma de colaboração da Microsoft
+  download_url: https://teams.microsoft.com/downloads/desktopurl?env=production&plat=windows&arch=x64&managedInstaller=true&download=true
+  install_method: exe
+  install_args: --silent
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Local\Microsoft\Teams\current\Teams.exe'
+    - type: registry_key_exists
+      hive: HKCU
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Teams
+      description: Verifica registro de instalação do Teams
+
+Zoom:
+  category: Communication
+  description: Plataforma de videoconferência
+  download_url: https://zoom.us/client/5.17.5.2543/ZoomInstallerFull.exe
+  install_method: exe
+  install_args: /silent
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Roaming\Zoom\bin\Zoom.exe'
+    - type: registry_key_exists
+      hive: HKCU
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ZoomUMX
+      description: Verifica registro de instalação do Zoom
+
+Notion:
+  category: Productivity
+  description: Workspace tudo-em-um para notas, tarefas e colaboração
+  download_url: https://www.notion.so/desktop/windows/download
+  install_method: exe
+  install_args: --silent
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Local\Programs\Notion\Notion.exe'
+    - type: registry_key_exists
+      hive: HKCU
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Notion
+      description: Verifica registro de instalação do Notion
+
+Obsidian:
+  category: Productivity
+  description: Aplicativo de notas com links bidirecionais
+  download_url: https://github.com/obsidianmd/obsidian-releases/releases/latest/download/Obsidian.1.5.3.exe
+  install_method: exe
+  install_args: /S
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Local\Programs\obsidian\Obsidian.exe'
+    - type: registry_key_exists
+      hive: HKCU
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Obsidian
+      description: Verifica registro de instalação do Obsidian
+
+Trello:
+  category: Productivity
+  description: Ferramenta de gerenciamento de projetos com quadros Kanban
+  download_url: https://trello.com/1/clients/electron/1.21.3/win32/ia32/Trello.exe
+  install_method: exe
+  install_args: --silent
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Local\Programs\Trello\Trello.exe'
+    - type: registry_key_exists
+      hive: HKCU
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Trello
+      description: Verifica registro de instalação do Trello
+
+WhatsApp Desktop:
+  category: Communication
+  description: Cliente desktop do WhatsApp
+  download_url: https://web.whatsapp.com/desktop/windows/release/x64/WhatsAppSetup.exe
+  install_method: exe
+  install_args: --silent
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Local\WhatsApp\WhatsApp.exe'
+    - type: registry_key_exists
+      hive: HKCU
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\WhatsApp
+      description: Verifica registro de instalação do WhatsApp Desktop

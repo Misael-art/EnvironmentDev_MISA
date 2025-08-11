@@ -1,0 +1,50 @@
+# Ferramentas de Áudio (Windows)
+
+Voicemeeter Banana:
+  category: Audio Tools (Windows)
+  description: Mixer de áudio virtual avançado
+  # Link da página oficial VB-Audio
+  download_url: https://download.vb-audio.com/Download_CABLE/VoicemeeterProSetup.exe # Link pode mudar, verificar versão (Banana/Potato)
+  install_method: exe
+  install_args: -i -m # Exemplo de args silenciosos, verificar documentação
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    # Verifica um dos executáveis principais
+    - type: file_exists
+      path: 'C:\Program Files (x86)\VB\Voicemeeter\voicemeeter8.exe' # Para Banana/Potato x64
+
+Equalizer APO:
+  category: Audio Tools (Windows)
+  description: Equalizador de áudio paramétrico/gráfico para todo o sistema
+  download_url: https://sourceforge.net/projects/equalizerapo/files/1.3/EqualizerAPO64-1.3.exe/download # Link SF
+  install_method: exe
+  install_args: /S # Suposição
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\EqualizerAPO\Editor.exe'
+
+VB-CABLE Virtual Audio Cable:
+  category: Audio Tools (Windows)
+  description: Cria dispositivos virtuais de entrada/saída de áudio
+  download_url: https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack43.zip # Link oficial (ZIP)
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_method: script # Requer extração e execução do setup
+  extract_path: '${env:TEMP}\VBCABLE_Driver' # Extrai para pasta temporária
+  dependencies: ['7-Zip']
+  script_actions:
+    - type: executable 
+      # Executa o setup x64 após extrair para TEMP
+      command: '${env:TEMP}\VBCABLE_Driver\VBCABLE_Setup_x64.exe' 
+      args: [] # Setup geralmente não tem args silenciosos fáceis, pode requerer interação ou wrapper
+  verify_actions:
+    # Verificar a instalação do driver é complexo. 
+    # Podemos verificar a existência do arquivo de setup extraído como um indicativo.
+    - type: file_exists
+      path: '${env:TEMP}\VBCABLE_Driver\VBCABLE_Setup_x64.exe'
+    # Ou verificar um arquivo de driver específico (nome pode variar)
+    # - type: file_exists
+    #   path: 'C:\Windows\System32\drivers\vbaudio_cable64.sys'

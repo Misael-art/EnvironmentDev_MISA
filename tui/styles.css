@@ -1,0 +1,576 @@
+/* Enhanced TUI Styles for Environment Dev */
+
+/* Global styles */
+* {
+    box-sizing: border-box;
+}
+
+Screen {
+    background: $background;
+    color: $text;
+}
+
+/* Header and Footer */
+Header {
+    dock: top;
+    height: 3;
+    background: $primary;
+    color: $text-primary;
+    content-align: center middle;
+    text-style: bold;
+}
+
+Footer {
+    dock: bottom;
+    height: 3;
+    background: $surface;
+    color: $text-muted;
+}
+
+/* Enhanced Navigation Components */
+
+/* Breadcrumb Navigation */
+NavigationBreadcrumb {
+    dock: top;
+    height: 1;
+    background: $surface;
+    color: $text-muted;
+    padding: 0 1;
+    border-bottom: solid $border;
+}
+
+/* Navigation Sidebar */
+.nav-sidebar {
+    dock: left;
+    width: 25;
+    background: $surface;
+    border-right: solid $border;
+    padding: 1;
+}
+
+.nav-title {
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+.section-title {
+    text-style: bold;
+    color: $accent;
+    margin: 1 0;
+}
+
+.nav-button {
+    width: 100%;
+    margin-bottom: 1;
+    background: $surface;
+    color: $text;
+    border: solid $border;
+}
+
+.nav-button:hover {
+    background: $primary;
+    color: $text-primary;
+}
+
+/* Status Bar */
+.status-bar {
+    dock: bottom;
+    height: 1;
+    background: $surface;
+    border-top: solid $border;
+    padding: 0 1;
+}
+
+.status-text {
+    color: $text;
+    text-style: bold;
+}
+
+.context-info {
+    color: $text-muted;
+    margin-left: 2;
+}
+
+.shortcuts {
+    dock: right;
+    color: $text-muted;
+    text-style: italic;
+}
+
+/* Quick Search Overlay */
+.quick-search-overlay {
+    dock: top;
+    height: 50%;
+    width: 80%;
+    offset: 10% 10%;
+    background: $surface;
+    border: thick $primary;
+    padding: 1;
+}
+
+.search-title {
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+/* Context Menu */
+.context-menu {
+    background: $surface;
+    border: solid $border;
+    padding: 1;
+    width: 20;
+}
+
+.context-menu-item {
+    width: 100%;
+    background: transparent;
+    color: $text;
+    border: none;
+    text-align: left;
+    padding: 0 1;
+}
+
+.context-menu-item:hover {
+    background: $primary;
+    color: $text-primary;
+}
+
+/* Main menu styles */
+#main-menu {
+    align: center middle;
+    width: 80%;
+    height: 80%;
+    background: $surface;
+    border: thick $primary;
+    border-title-align: center;
+}
+
+#app-title {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin: 1;
+}
+
+#app-subtitle {
+    text-align: center;
+    color: $text-muted;
+    margin-bottom: 2;
+}
+
+#menu-container {
+    align: center middle;
+    width: 60%;
+    height: auto;
+}
+
+#menu-container Button {
+    width: 100%;
+    margin: 1;
+    height: 3;
+}
+
+#status-panel {
+    dock: bottom;
+    height: 4;
+    background: $surface-lighten-1;
+    border-top: solid $border;
+    padding: 1;
+}
+
+#status-text {
+    color: $success;
+    text-style: bold;
+}
+
+#start-time {
+    color: $text-muted;
+    text-align: right;
+}
+
+/* Components screen styles */
+#main-container {
+    layout: horizontal;
+    height: 100%;
+}
+
+#components-panel {
+    width: 60%;
+    background: $surface;
+    border-right: solid $border;
+    padding: 1;
+}
+
+#details-panel {
+    width: 40%;
+    background: $surface-lighten-1;
+    padding: 1;
+}
+
+#components-title, #details-title {
+    text-style: bold;
+    color: $primary;
+    margin-bottom: 1;
+}
+
+#search-input {
+    margin-bottom: 1;
+}
+
+#components-table {
+    height: 1fr;
+    margin-bottom: 1;
+}
+
+#component-actions {
+    layout: horizontal;
+    height: auto;
+    align: center middle;
+}
+
+#component-actions Button {
+    margin: 0 1;
+}
+
+#details-content {
+    height: 1fr;
+    background: $background;
+    border: solid $border;
+    padding: 1;
+}
+
+#details-content Static {
+    margin-bottom: 1;
+}
+
+#component-name {
+    text-style: bold;
+    color: $primary;
+}
+
+/* System info screen styles */
+#system-container {
+    padding: 1;
+    height: 100%;
+}
+
+#system-title {
+    text-style: bold;
+    color: $primary;
+    text-align: center;
+    margin-bottom: 1;
+}
+
+Tabs {
+    height: 1fr;
+}
+
+TabPane {
+    padding: 1;
+}
+
+TabPane ScrollableContainer {
+    height: 1fr;
+    background: $background;
+    border: solid $border;
+    padding: 1;
+}
+
+TabPane ScrollableContainer Static {
+    margin-bottom: 1;
+}
+
+/* Settings screen styles */
+#settings-container {
+    align: center middle;
+    width: 80%;
+    height: 80%;
+    background: $surface;
+    border: thick $primary;
+    padding: 2;
+}
+
+#settings-title {
+    text-style: bold;
+    color: $primary;
+    text-align: center;
+    margin-bottom: 2;
+}
+
+#settings-form {
+    width: 100%;
+    height: auto;
+}
+
+#settings-form Label {
+    text-style: bold;
+    color: $text;
+    margin-bottom: 1;
+}
+
+#settings-form Input {
+    margin-bottom: 2;
+    width: 100%;
+}
+
+#settings-form Switch {
+    margin-bottom: 2;
+}
+
+RadioSet {
+    margin-bottom: 2;
+    background: $surface-lighten-1;
+    border: solid $border;
+    padding: 1;
+}
+
+RadioButton {
+    margin: 0 1;
+}
+
+#settings-actions {
+    layout: horizontal;
+    align: center middle;
+    margin-top: 2;
+}
+
+#settings-actions Button {
+    margin: 0 1;
+}
+
+/* Button variants */
+Button.primary {
+    background: blue;
+    color: white;
+}
+
+Button.primary:hover {
+    background: lightblue;
+}
+
+Button.default {
+    background: gray;
+    color: white;
+    border: solid white;
+}
+
+Button.default:hover {
+    background: lightgray;
+}
+
+Button.error {
+    background: red;
+    color: white;
+}
+
+Button.error:hover {
+    background: lightcoral;
+}
+
+/* DataTable styles */
+DataTable {
+    background: black;
+    border: solid gray;
+}
+
+DataTable > .datatable--header {
+    background: blue;
+    color: white;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: gray;
+    color: white;
+}
+
+DataTable:focus > .datatable--cursor {
+    background: lightblue;
+}
+
+/* Input styles */
+Input {
+    background: black;
+    border: solid gray;
+    color: white;
+}
+
+Input:focus {
+    border: solid blue;
+}
+
+Input.-invalid {
+    border: solid red;
+}
+
+/* Switch styles */
+Switch {
+    background: gray;
+}
+
+Switch.-on {
+    background: green;
+}
+
+Switch > .switch--slider {
+    background: black;
+    color: white;
+}
+
+/* ScrollableContainer styles */
+ScrollableContainer {
+    scrollbar-background: gray;
+    scrollbar-color: blue;
+    scrollbar-corner-color: gray;
+}
+
+ScrollableContainer:focus {
+    scrollbar-background: lightgray;
+    scrollbar-color: lightblue;
+}
+
+/* Tree styles */
+Tree {
+    background: black;
+    color: white;
+}
+
+Tree > .tree--guides {
+    color: gray;
+}
+
+Tree > .tree--guides-hover {
+    color: blue;
+}
+
+Tree > .tree--guides-selected {
+    color: blue;
+    text-style: bold;
+}
+
+/* Log styles */
+Log {
+    background: black;
+    border: solid gray;
+    color: white;
+}
+
+/* Progress bar styles */
+ProgressBar {
+    background: gray;
+    color: white;
+}
+
+ProgressBar > .bar--bar {
+    background: blue;
+}
+
+ProgressBar > .bar--percentage {
+    color: white;
+    text-style: bold;
+}
+
+/* Container styles */
+Container {
+    background: black;
+    border: solid gray;
+}
+
+Container.primary {
+    background: blue;
+    color: white;
+}
+
+Container.secondary {
+    background: gray;
+    color: white;
+}
+
+Container.error {
+    background: red;
+    color: white;
+}
+
+Container.warning {
+    background: yellow;
+    color: black;
+}
+
+Container.success {
+    background: green;
+    color: white;
+}
+
+Vertical {
+    background: transparent;
+}
+
+Horizontal {
+    background: transparent;
+}
+
+/* Static text styles */
+Static {
+    color: white;
+}
+
+Static.title {
+    text-style: bold;
+    color: blue;
+}
+
+Static.subtitle {
+    color: gray;
+}
+
+Static.primary {
+    color: blue;
+}
+
+Static.secondary {
+    color: gray;
+}
+
+Static.success {
+    color: green;
+}
+
+Static.warning {
+    color: yellow;
+}
+
+Static.error {
+    color: red;
+}
+
+/* Simple animations and transitions */
+.fade-in {
+    opacity: 1;
+}
+
+.slide-in {
+    offset-x: 0;
+}
+
+/* Focus indicators */
+*:focus {
+    border: solid blue;
+}
+
+Button:focus {
+    border: solid blue;
+    text-style: bold;
+}
+
+Input:focus {
+    border: solid blue;
+    background: gray;
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    text-style: italic;
+}

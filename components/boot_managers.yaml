@@ -1,0 +1,143 @@
+# Gerenciadores de Boot para Environment Dev Script
+# Este arquivo contém todos os componentes relacionados a gerenciadores de boot
+
+Grub2Win:
+  category: Boot Managers
+  description: Gerenciador de boot GRUB2 para Windows
+  dependencies: []
+  download_url: https://sourceforge.net/projects/grub2win/files/latest/download
+  install_method: exe
+  install_args: /VERYSILENT /SUPPRESSMSGBOXES
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\grub2\grub2win.exe'
+  post_install_message: |
+    Grub2Win foi instalado com sucesso.
+    Você pode configurar as opções de boot executando C:\grub2\grub2win.exe
+
+CloverBootManager:
+  category: Boot Managers
+  dependencies: []
+  description: Gerenciador de boot avançado para configurações de multiboot
+  install_method: script
+  script_actions:
+    - type: executable # Usar 'executable' para chamar o interpretador Python
+      # 'command' será preenchido dinamicamente com sys.executable pelo código
+      # ou podemos definir explicitamente se necessário, mas é melhor deixar dinâmico.
+      # Passamos o script e a função como argumentos.
+      # NOTA: Isso requer que clover_installer.py seja executável e aceite argumentos
+      # ou que tenhamos um wrapper. Por simplicidade, vamos assumir que ele pode ser chamado.
+      # Uma abordagem mais robusta seria ter um ponto de entrada em clover_installer.py
+      # que chama a função desejada.
+      command: '${python_executable}' # Placeholder para ser substituído ou usar sys.executable
+      args:
+        - '${project_root}/env_dev/core/clover_installer.py'
+        - 'install_clover' # Nome da função a ser chamada (requer lógica no script)
+  verify_actions:
+    - type: python_module
+      module_path: env_dev.utils.clover_verification
+      module_function: verify_clover_installation
+  rollback_actions:
+    - type: python_module
+      module_path: env_dev.utils.efi_backup
+      module_function: restore_latest_backup
+  post_install_message: |
+    Clover Boot Manager foi instalado com sucesso.
+
+    Um backup da partição EFI foi criado em caso de problemas.
+    Para acessar o modo de recuperação em caso de problemas, use a opção
+    "Recuperar Clover Boot Manager" no menu de ferramentas do Environment Dev.
+
+    Um guia detalhado de recuperação está disponível na documentação.
+
+    Reinicie o computador para usar o Clover para inicialização.
+
+DualBootPartitionManager:
+  description: "Utilitario para gerenciar particoes em configuracoes dual boot"
+  category: Boot Managers
+  install_method: "script"
+  extract_path: '${env:USERPROFILE}\\AppData\\Local\\DualBootPartitionManager'
+  script_actions:
+    - type: powershell
+      command: "New-Item -Path '${env:USERPROFILE}\\AppData\\Local\\DualBootPartitionManager' -ItemType Directory -Force"
+      args: []
+    - type: powershell
+      command: |
+        Write-Host "Instalando Dual Boot Partition Manager..."
+        $targetDir = "$env:USERPROFILE\AppData\Local\DualBootPartitionManager"
+
+        # Criar arquivo de script auxiliar
+        $scriptContent = @'
+        Write-Host "=== Preparação para Dual Boot ==="
+        Write-Host "Este script ajuda a preparar seu sistema para dual boot com Windows e Linux."
+
+        # Verificar se o sistema está em modo UEFI ou Legacy BIOS
+        $firmware = Get-ComputerInfo | Select-Object BiosFirmwareType
+        Write-Host "Tipo de firmware: $($firmware.BiosFirmwareType)"
+
+        # Mostrar informações sobre discos e partições
+        Write-Host "`nDiscos disponíveis:"
+        Get-Disk | Format-Table -AutoSize
+
+        Write-Host "`nPartições existentes:"
+        Get-Partition | Format-Table -AutoSize
+
+        # Verificar espaço livre
+        $disks = Get-Disk | Where-Object { $_.Size -gt 0 }
+        foreach ($disk in $disks) {
+            $usedSpace = (Get-Partition -DiskNumber $disk.Number | Measure-Object -Property Size -Sum).Sum
+            $freeSpace = $disk.Size - $usedSpace
+            $freeSpaceGB = [math]::Round($freeSpace / 1GB, 2)
+
+            Write-Host "Disco $($disk.Number): $freeSpaceGB GB livres"
+        }
+
+        Write-Host "`nPressione qualquer tecla para continuar..."
+        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        '@
+
+        Set-Content -Path "$targetDir\prepare_dualboot.ps1" -Value $scriptContent
+
+        # Criar arquivo batch para facilitar o uso
+        $batchContent = @'
+        @echo off
+        echo Assistente de Dual Boot
+        echo ====================
+        echo.
+        echo 1. Preparar sistema para dual boot
+        echo 2. Abrir gerenciamento de disco
+        echo 3. Sair
+        echo.
+        set /p choice=Escolha uma opção:
+
+        if "%choice%"=="1" (
+            powershell -ExecutionPolicy Bypass -File "%~dp0prepare_dualboot.ps1"
+        ) else if "%choice%"=="2" (
+            diskmgmt.msc
+        )
+
+        pause
+        '@
+
+        Set-Content -Path "$targetDir\dualboot.bat" -Value $batchContent -Encoding ASCII
+
+        # Criar atalho na área de trabalho
+        $WshShell = New-Object -ComObject WScript.Shell
+        $Shortcut = $WshShell.CreateShortcut("$env:USERPROFILE\Desktop\Assistente Dual Boot.lnk")
+        $Shortcut.TargetPath = "$targetDir\dualboot.bat"
+        $Shortcut.Save()
+
+        Write-Host "Dual Boot Partition Manager instalado com sucesso."
+      args: []
+  verify_actions:
+    - type: directory_exists
+      path: '${env:USERPROFILE}\\AppData\\Local\\DualBootPartitionManager'
+  post_install_message: |
+    Utilitário de gerenciamento de partições dual boot instalado com sucesso.
+    Foi criado um atalho "Assistente Dual Boot" em sua área de trabalho.
+    Use-o para preparar seu sistema para configurações de dual boot.
+
+# Futuras adições de gerenciadores de boot podem ser incluídas aqui
+# exemplo: rEFInd, XOSL, GAG, etc.

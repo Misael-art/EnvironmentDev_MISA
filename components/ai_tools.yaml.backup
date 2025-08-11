@@ -1,0 +1,67 @@
+Anaconda:
+  category: AI Tools
+  dependencies: []
+  description: Distribuição Python para ciência de dados
+  download_url: https://repo.anaconda.com/archive/Anaconda3-2023.09-0-Windows-x86_64.exe
+  hash: 810da8bff79c10a708b7af9e8f21e6bb47467261a31741240f27bd807f155cb9
+  hash_algorithm: sha256
+  install_args: /S /RegisterPython=0 /AddToPath=1 /InstallationType=JustMe
+  install_method: exe
+  verify_actions:
+  - path: ${env:USERPROFILE}\anaconda3
+    type: directory_exists
+Hugging Face CLI:
+  category: AI Tools
+  dependencies:
+  - Anaconda
+  description: Cliente para interagir com a plataforma Hugging Face
+  install_args: huggingface_hub
+  install_method: pip
+LM Studio:
+  alternative_urls:
+  - https://lmstudio.ai/download
+  category: AI Tools
+  description: Interface para executar modelos de linguagem localmente
+  download_url: https://releases.lmstudio.ai/windows/x64/0.2.15/LM%20Studio-0.2.15-Setup.exe
+  hash: HASH_NEEDS_UPDATE
+  hash_algorithm: sha256
+  install_args: /S
+  install_method: exe
+  verify_actions:
+  - path: C:\Program Files\LM Studio\LM Studio.exe
+    type: file_exists
+NVIDIA CUDA Toolkit:
+  category: AI Tools
+  description: Plataforma de computação paralela e API da NVIDIA
+  download_url: https://developer.download.nvidia.com/compute/cuda/12.3.2/local_installers/cuda_12.3.2_546.12_windows.exe
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_args: -s
+  install_method: exe
+  verify_actions:
+  - name: CUDA_PATH
+    type: env_var_exists
+  - path: ${env:CUDA_PATH}\bin
+    type: directory_exists
+ONNX Runtime:
+  category: AI Tools
+  dependencies:
+  - Anaconda
+  - NVIDIA CUDA Toolkit
+  description: Runtime para modelos ONNX (Open Neural Network Exchange)
+  install_args: onnxruntime-gpu
+  install_method: pip
+PyTorch:
+  category: AI Tools
+  dependencies:
+  - Anaconda
+  description: Framework de deep learning com aceleração GPU
+  install_args: torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+  install_method: pip
+TensorFlow:
+  category: AI Tools
+  dependencies:
+  - Anaconda
+  description: Framework de machine learning do Google
+  install_args: tensorflow
+  install_method: pip

@@ -1,0 +1,36 @@
+Cursor IDE:
+  alternative_urls:
+  - https://cursor.sh/download
+  category: Editors
+  description: IDE focado em IA, fork do VSCode
+  download_url: https://download.cursor.sh/windows/nsis/x64
+  hash: HASH_NEEDS_UPDATE
+  hash_algorithm: sha256
+  install_args: /S
+  install_method: exe
+  verify_actions:
+  - path: ${env:LOCALAPPDATA}\Programs\Cursor\Cursor.exe
+    type: file_exists
+Visual Studio Code:
+  category: Editors
+  dependencies: []
+  description: IDE leve e poderoso da Microsoft (versão estável)
+  download_url: https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_args: /VERYSILENT /MERGETASKS=!runcode
+  install_method: exe
+  verify_actions:
+  - path: ${env:LOCALAPPDATA}\Programs\Microsoft VS Code\Code.exe
+    type: file_exists
+Visual Studio Code Insiders:
+  category: Editors
+  description: Versão de pré-lançamento do VSCode
+  download_url: https://code.visualstudio.com/sha/download?build=insider&os=win32-x64-user
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_args: /VERYSILENT /MERGETASKS=!runcode
+  install_method: exe
+  verify_actions:
+  - path: ${env:LOCALAPPDATA}\Programs\Microsoft VS Code Insiders\Code - Insiders.exe
+    type: file_exists

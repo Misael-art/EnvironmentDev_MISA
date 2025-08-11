@@ -1,0 +1,60 @@
+7-Zip:
+  category: Common Utilities
+  description: Compactador/Descompactador de arquivos 7-Zip (x64)
+  download_url: https://www.7-zip.org/a/7z2409-x64.exe
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_args: /S
+  install_method: exe
+  verify_actions:
+  - path: C:\Program Files\7-Zip\7z.exe
+    type: file_exists
+HardLinkShellExt_X64:
+  category: Common Utilities
+  description: Extensão para criação de hardlinks/symlinks direto do Windows Explorer
+  download_url: https://schinagl.priv.at/nt/hardlinkshellext/linkshellextension.html
+  hash: HASH_NEEDS_UPDATE
+  hash_algorithm: sha256
+  install_args: /S
+  install_method: exe
+  notes: Link redirecionado para página oficial
+  verify_actions:
+  - path: C:\Program Files\HardlinkShellExt\HardlinkShellExt.dll
+    type: file_exists
+Notepad++:
+  category: Common Utilities
+  description: Editor de texto avançado
+  download_url: https://github.com/notepad-plus-plus/notepad-plus-plus/releases/download/v8.6.2/npp.8.6.2.Installer.x64.exe
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_args: /S
+  install_method: exe
+  verify_actions:
+  - path: C:\Program Files\Notepad++\notepad++.exe
+    type: file_exists
+Revo Uninstaller:
+  category: Common Utilities
+  dependencies:
+  - 7-Zip
+  description: Desinstalador de programas avançado (versão gratuita)
+  download_url: https://www.revouninstaller.com/download-free-portable.php
+  extract_path: ${env:ProgramFiles}\Revo Uninstaller Free
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_method: archive
+  verify_actions:
+  - path: ${env:ProgramFiles}\Revo Uninstaller Free\RevoUPort.exe
+    type: file_exists
+VisualCppRedist_AIO:
+  category: Common Utilities
+  description: Pacote All-in-One dos Microsoft Visual C++ Runtimes
+  install_method: script
+  script_actions:
+  - args:
+    - /passive
+    - /norestart
+    command: steam_driver\Vcpp\VisualCppRedist_AIO_x86_x64.exe
+    type: executable
+  verify_actions:
+  - path: C:\Windows\System32\msvcp140.dll
+    type: file_exists

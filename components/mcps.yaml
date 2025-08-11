@@ -1,0 +1,40 @@
+# Configuração e Instalação dos Servidores MCP
+
+MCP Servers Setup:
+  category: Development Environment
+  description: Instala dependências, compila e configura os servidores MCP locais e remotos.
+  # Dependências essenciais verificadas pelo script PowerShell
+  dependencies: 
+    - Node.js 
+    - Python 
+    - Git
+    # Adicionamos os editores como dependência lógica, embora o script não os verifique diretamente
+    - Visual Studio Code 
+    - Cursor IDE
+    - Visual Studio Code Insiders
+    # - Trae # Adicionar se/quando definido
+    # - Windsurf # Adicionar se/quando definido
+  install_method: script
+  # O script pode precisar de admin para escrever em C:\MCPs Servers e modificar configs em AppData
+  requires_admin: true 
+  script_actions:
+    - type: powershell
+      # Executa o script localizado na pasta resources/MCPs
+      # Assume que o script está sendo executado da raiz do projeto
+      command: '.\resources\MCPs\setup_mcps.ps1' 
+      args: []
+  verify_actions:
+    # Verifica se a pasta principal foi criada
+    - type: directory_exists
+      path: 'C:\MCPs Servers'
+    # Verifica se um arquivo de configuração chave foi gerado/atualizado
+    # (Exemplo para Roo/Cline, pode falhar se VSCode não estiver instalado)
+    - type: file_exists
+      path: '${env:APPDATA}\Code\User\globalStorage\rooveterinaryinc.roo-cline\settings\mcp_settings.json'
+    # Verifica se um dos MCPs locais compilados existe (exemplo)
+    - type: file_exists
+      path: 'C:\MCPs Servers\Figma-Context-MCP\dist\index.js' 
+  post_install_message: |
+    Setup dos MCP Servers concluído. Verifique o log do script para detalhes. 
+    Lembre-se de executar 'npx @modelcontextprotocol/server-gdrive auth' manualmente se for usar o MCP do Google Drive.
+    Reinicie suas IDEs/Editores (VSCode, Cursor, etc.) para carregar a nova configuração.

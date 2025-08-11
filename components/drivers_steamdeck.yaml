@@ -1,0 +1,223 @@
+# Drivers Específicos para Steam Deck rodando Windows
+
+SteamDeck Windows Drivers:
+  category: Drivers
+  description: Instala os drivers essenciais para o hardware do Steam Deck no Windows.
+  dependencies: 
+    - VisualCppRedist_AIO # Pré-requisito comum
+    - Git # Necessário para clonar steam-deck-tools
+    # 7-Zip pode ser necessário se SteamDeckTools precisar de extração extra, mas o clone direto não precisa.
+  install_method: script
+  # Requer execução como Administrador devido à instalação de drivers (pnputil, DISM, Start-Process em Program Files)
+  requires_admin: true 
+  script_actions:
+    - type: powershell
+      # Usamos um bloco de comando multilinha para o script PowerShell
+      command: |
+        # --- Script de Instalação de Drivers do Steam Deck (Windows) ---
+        
+        Write-Host "Iniciando instalação dos drivers do Steam Deck para Windows..."
+        
+        # --- 0. Definição de Caminhos e Variáveis ---
+        $ErrorActionPreference = "Stop" # Pára o script em caso de erro não tratado
+        $ScriptRoot = $PSScriptRoot # Diretório onde o script principal (environment_dev.py) está
+        # Assume que a pasta 'steam_driver' está na raiz do projeto, um nível acima de 'env_dev'
+        $DriverBaseDir = Join-Path $ScriptRoot ".." "steam_driver" 
+        $TargetDirSDTools = Join-Path $env:ProgramFiles "SteamDeckTools"
+        $TempDirSDTools = Join-Path $env:TEMP "SteamDeckToolsRepo"
+
+        Write-Host "Diretório base dos drivers: $DriverBaseDir"
+        Write-Host "Diretório de destino SteamDeckTools: $TargetDirSDTools"
+        Write-Host "Diretório temporário SteamDeckTools: $TempDirSDTools"
+
+        # --- 1. Verificação de Ambiente (Placeholder) ---
+        # TODO: Implementar e chamar uma função como IsSteamDeckWindows()
+        $isSteamDeck = $true # Assumir true por enquanto para testes
+        if (-not $isSteamDeck) {
+            Write-Warning "Este script é destinado apenas para Steam Deck rodando Windows. Abortando."
+            # exit 1 # Descomentar quando a função de verificação estiver pronta
+        } else {
+            Write-Host "Ambiente detectado como Steam Deck (Windows)."
+        }
+
+        # --- 2. Instalar Drivers .inf (pnputil) ---
+        Write-Host "Instalando drivers .inf..."
+        $InfFolders = @(
+            "Audio_Drivers_1\cs35l41-V1.2.1.0",
+            "Audio_Drivers_2\NAU88L21_x64_1.0.6.0_WHQL - DUA_BIQ_WHQL",
+            "Bluetooth_Drivers",
+            "MicroSD_Drivers",
+            "wlan_driver\oled_10", # Assumindo OLED por padrão, pode precisar de lógica para LCD
+            "tools - btrfs-1.8.2" 
+        )
+        foreach ($folder in $InfFolders) {
+            $FullPath = Join-Path $DriverBaseDir $folder
+            if (Test-Path $FullPath) {
+                Write-Host "  Processando INF em: $FullPath"
+                try {
+                    # Tenta adicionar e instalar todos os INFs na pasta
+                    pnputil /add-driver "$FullPath\*.inf" /install
+                    Write-Host "    Drivers INF de $folder processados."
+                } catch {
+                    Write-Warning "    Erro ao processar drivers INF em $folder: $($_.Exception.Message)"
+                }
+            } else {
+                Write-Warning "  Diretório não encontrado: $FullPath"
+            }
+        }
+
+        # --- 3. Instalar Drivers .cab (DISM) ---
+        Write-Host "Instalando drivers .cab..."
+        $CabFiles = @(
+            "Bluetooth_Drivers.cab",
+            "MicroSD_Drivers.cab"
+        )
+        foreach ($cab in $CabFiles) {
+            $CabPath = Join-Path $DriverBaseDir $cab
+            if (Test-Path $CabPath) {
+                Write-Host "  Instalando $cab..."
+                try {
+                    DISM /Online /Add-Package /PackagePath:"$CabPath" /NoRestart
+                    Write-Host "    $cab instalado com sucesso."
+                } catch {
+                    Write-Warning "    Erro ao instalar $cab: $($_.Exception.Message)"
+                }
+            } else {
+                Write-Warning "  Arquivo CAB não encontrado: $CabPath"
+            }
+        }
+
+        # --- 4. Instalar Drivers .exe ---
+        Write-Host "Instalando drivers .exe..."
+        
+        # APU/Gráfico
+        $ApuSetup = Join-Path $DriverBaseDir "APU_Drivers\GFX Driver_41.1.1.30310_230227a-388790E-2302270303\Setup.exe"
+        if (Test-Path $ApuSetup) {
+            Write-Host "  Instalando driver APU..."
+            try {
+                Start-Process -FilePath $ApuSetup -ArgumentList "/S" -Wait -PassThru
+                Write-Host "    Driver APU instalado."
+            } catch {
+                 Write-Warning "    Erro ao instalar driver APU: $($_.Exception.Message)"
+            }
+        } else { Write-Warning "  Instalador APU não encontrado: $ApuSetup" }
+
+        # WLAN (Exemplo para LCD, ajustar se necessário)
+        $WlanSetup = Join-Path $DriverBaseDir "wlan_driver\lcd\Setup.exe"
+         if (Test-Path $WlanSetup) {
+            Write-Host "  Instalando driver WLAN (LCD)..."
+            try {
+                Start-Process -FilePath $WlanSetup -ArgumentList "/S" -Wait -PassThru
+                Write-Host "    Driver WLAN instalado."
+            } catch {
+                 Write-Warning "    Erro ao instalar driver WLAN: $($_.Exception.Message)"
+            }
+        } else { Write-Warning "  Instalador WLAN (LCD) não encontrado: $WlanSetup" }
+
+        # --- 5. Instalar Steam Deck Tools (Git) ---
+        Write-Host "Instalando Steam Deck Tools via Git..."
+        $GitRepoUrl = "https://github.com/ayufan/steam-deck-tools.git"
+        
+        # Limpa diretórios temporário e de destino antigos
+        Write-Host "  Limpando diretórios antigos (se existirem)..."
+        Remove-Item -Path $TempDirSDTools -Recurse -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path $TargetDirSDTools -Recurse -Force -ErrorAction SilentlyContinue
+        
+        Write-Host "  Clonando repositório de $GitRepoUrl para $TempDirSDTools..."
+        try {
+            git clone $GitRepoUrl $TempDirSDTools
+            if ($LASTEXITCODE -ne 0) { throw "Falha no git clone" }
+            Write-Host "    Repositório clonado com sucesso."
+
+            Write-Host "  Copiando arquivos para $TargetDirSDTools..."
+            New-Item -Path $TargetDirSDTools -ItemType Directory -Force | Out-Null
+            Copy-Item -Path "$TempDirSDTools\*" -Destination $TargetDirSDTools -Recurse -Force
+             if ($LASTEXITCODE -ne 0) { throw "Falha ao copiar arquivos" }
+            Write-Host "    Arquivos copiados com sucesso."
+
+            # Limpa o repositório temporário
+            Write-Host "  Limpando repositório temporário..."
+            Remove-Item -Path $TempDirSDTools -Recurse -Force -ErrorAction SilentlyContinue
+
+            # Configurar inicialização
+            Write-Host "  Configurando executáveis para iniciar com Windows..."
+            $StartupExecutables = @("FanControl.exe", "PerformanceOverlay.exe", "PowerControl.exe", "SteamController.exe")
+            $RunKeyPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+            
+            foreach ($exe in $StartupExecutables) {
+                $ExePath = Join-Path $TargetDirSDTools $exe
+                $RegName = "SteamDeckTool_" + ($exe -replace '\.exe$', '')
+                if (Test-Path $ExePath) {
+                    try {
+                        New-ItemProperty -Path $RunKeyPath -Name $RegName -Value """$ExePath""" -PropertyType String -Force
+                        Write-Host "    '$exe' configurado para iniciar."
+                    } catch {
+                         Write-Warning "    Erro ao configurar '$exe' na inicialização: $($_.Exception.Message)"
+                    }
+                } else {
+                    Write-Warning "    Executável não encontrado para configurar na inicialização: $ExePath"
+                }
+            }
+
+        } catch {
+            Write-Error "    ERRO ao instalar Steam Deck Tools: $($_.Exception.Message)"
+            # Tenta limpar o diretório de destino se a cópia falhou
+            Remove-Item -Path $TargetDirSDTools -Recurse -Force -ErrorAction SilentlyContinue
+        } finally {
+             # Garante a limpeza do temporário mesmo em erro
+             Remove-Item -Path $TempDirSDTools -Recurse -Force -ErrorAction SilentlyContinue
+        }
+
+        # --- 6. Instalar CCC2 ---
+        $CccSetup = Join-Path $DriverBaseDir "ccc2_install_23.9.1.exe"
+        if (Test-Path $CccSetup) {
+            Write-Host "  Instalando CCC2..."
+            try {
+                # Assumindo /S como argumento silencioso, pode precisar de ajuste
+                Start-Process -FilePath $CccSetup -ArgumentList "/S" -Wait -PassThru 
+                Write-Host "    CCC2 instalado."
+            } catch {
+                 Write-Warning "    Erro ao instalar CCC2: $($_.Exception.Message)"
+            }
+        } else { Write-Warning "  Instalador CCC2 não encontrado: $CccSetup" }
+
+        # --- 7. Instalar RivaTuner ---
+        $RtssSetup = Join-Path $DriverBaseDir "RivaTuner\RTSSSetup736.exe"
+         if (Test-Path $RtssSetup) {
+            Write-Host "  Instalando RivaTuner Statistics Server..."
+            try {
+                Start-Process -FilePath $RtssSetup -ArgumentList "/S" -Wait -PassThru
+                Write-Host "    RivaTuner instalado."
+            } catch {
+                 Write-Warning "    Erro ao instalar RivaTuner: $($_.Exception.Message)"
+            }
+        } else { Write-Warning "  Instalador RivaTuner não encontrado: $RtssSetup" }
+
+        # --- 8. (Opcional) Importar Certificado ---
+        $CertPath = Join-Path $DriverBaseDir "drivers.cer"
+        if (Test-Path $CertPath) {
+             Write-Host "  Importando certificado..."
+             try {
+                 certutil -addstore Root "$CertPath"
+                 Write-Host "    Certificado importado."
+             } catch {
+                  Write-Warning "    Erro ao importar certificado: $($_.Exception.Message)"
+             }
+        }
+
+        Write-Host "Instalação dos drivers concluída."
+      args: [] # Argumentos para o script PowerShell em si, se necessário
+  verify_actions:
+    # Verifica alguns arquivos/pastas chave como indicativo
+    - type: file_exists
+      path: 'C:\Program Files\AMD\CNext\CNext\AMDRSServ.exe'
+    - type: file_exists
+      path: 'C:\Program Files (x86)\RivaTuner Statistics Server\RTSS.exe'
+    - type: file_exists
+      path: 'C:\Program Files\SteamDeckTools\FanControl.exe' # Verifica um dos executáveis copiados
+    - type: file_exists
+      # Verifica um driver de áudio comum
+      path: 'C:\Windows\System32\drivers\cs35l41.sys' 
+  post_install_message: |
+    Drivers do Steam Deck para Windows e ferramentas associadas foram instalados. 
+    É ALTAMENTE RECOMENDADO reiniciar o sistema agora para garantir que todos os drivers funcionem corretamente.
