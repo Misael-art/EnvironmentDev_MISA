@@ -26,6 +26,7 @@ from core.config import ConfigurationManager, SystemConfiguration
 from core.exceptions import EnvironmentDevDeepEvaluationError
 from validation.schemas import ComponentModel
 from cli.utils import NetworkOperations
+from detection.unified_engine import UnifiedDetectionEngine
 
 # Initialize CLI app and console
 app = typer.Typer(
@@ -176,6 +177,7 @@ def list_components(
         table.add_column("Description", style="white")
         table.add_column("Status", style="yellow")
         table.add_column("Version", style="green")
+        table.add_column("Confiança", style="blue")
         
         # Load components from YAML files
         components_dir = Path("components")
@@ -184,6 +186,19 @@ def list_components(
             raise typer.Exit(1)
         
         component_count = 0
+
+        # Initialize detection engine to surface confidence when possible
+        detection_engine = None
+        registry_index = []
+        try:
+            detection_engine = UnifiedDetectionEngine(get_config_manager())
+            detection_engine.initialize()
+            registry_apps = detection_engine.scan_registry_installations()
+            # Build simple index for name matching
+            registry_index = [(app.name.lower(), getattr(app.detection_confidence, 'value', 'unknown')) for app in registry_apps]
+        except Exception:
+            # Non-fatal: keep listing without confidence enrichment
+            registry_index = []
         
         for yaml_file in components_dir.glob("*.yaml"):
             try:
@@ -212,12 +227,21 @@ def list_components(
                     if available_only and "Installed" in status:
                         continue
                     
+                    # Confidence matching (simple contains/equals)
+                    comp_lower = component_name.lower()
+                    confidence_value = "unknown"
+                    for app_name, conf in registry_index:
+                        if comp_lower == app_name or comp_lower in app_name or app_name in comp_lower:
+                            confidence_value = conf
+                            break
+
                     table.add_row(
                         component_name,
                         component_data.get('category', 'Unknown'),
                         component_data.get('description', 'No description'),
                         status,
-                        version
+                        version,
+                        confidence_value
                     )
                     component_count += 1
                     
