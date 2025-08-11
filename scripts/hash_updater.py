@@ -41,7 +41,7 @@ class HashUpdater(SystemComponentBase):
         Args:
             config_manager: Configuration manager instance
         """
-        super().__init__(config_manager.get_config())
+        super().__init__(config_manager)
         self._config_manager = config_manager
         self._session = requests.Session()
         self._session.headers.update({
@@ -57,13 +57,30 @@ class HashUpdater(SystemComponentBase):
             'yaml_update_errors': 0
         }
     
+    def validate_configuration(self) -> None:
+        """Validate configuration required by HashUpdater.
+        Ensures download timeout is positive.
+        """
+        errors: List[str] = []
+        try:
+            if getattr(self._config, 'download_timeout', 0) <= 0:
+                errors.append("download_timeout must be positive")
+        except Exception:
+            errors.append("download_timeout not available in configuration")
+
+        if errors:
+            raise ValidationError(
+                f"Invalid configuration: {'; '.join(errors)}",
+                context={"component": "HashUpdater", "validation_errors": errors}
+            )
+
     def initialize(self) -> OperationResult:
         """Initialize the hash updater component."""
         try:
             self._logger.info("Initializing Hash Updater")
             
             # Validate configuration
-            self._validate_configuration()
+            self.validate_configuration()
             
             # Setup session with timeouts
             self._session.timeout = self._config.download_timeout
@@ -73,11 +90,17 @@ class HashUpdater(SystemComponentBase):
                 success=True,
                 message="Hash Updater initialized",
                 data={'component': 'HashUpdater'},
-                error=None
+                errors=[]
             )
             
         except Exception as e:
-            return self._handle_error(e, "Failed to initialize Hash Updater")
+            self._logger.error(f"Initialization error: {e}")
+            return OperationResult(
+                success=False,
+                message="Failed to initialize Hash Updater",
+                data=None,
+                errors=[str(e)]
+            )
     
     def cleanup(self) -> OperationResult:
         """Cleanup the hash updater component."""
@@ -92,11 +115,17 @@ class HashUpdater(SystemComponentBase):
                 success=True,
                 message="Hash Updater cleaned up",
                 data=None,
-                error=None
+                errors=[]
             )
             
         except Exception as e:
-            return self._handle_error(e, "Failed to cleanup Hash Updater")
+            self._logger.error(f"Cleanup error: {e}")
+            return OperationResult(
+                success=False,
+                message="Failed to cleanup Hash Updater",
+                data=None,
+                errors=[str(e)]
+            )
     
     def find_yaml_files(self, components_dir: Path) -> List[Path]:
         """Find all YAML files in the components directory.
@@ -324,7 +353,7 @@ class HashUpdater(SystemComponentBase):
                     success=False,
                     message=f"Failed to load {file_path}",
                     data=None,
-                    error=error
+                    errors=[error]
                 )
             
             # Find pending hashes
@@ -335,7 +364,7 @@ class HashUpdater(SystemComponentBase):
                     success=True,
                     message=f"No pending hashes in {file_path}",
                     data={'pending_count': 0},
-                    error=None
+                    errors=[]
                 )
             
             self._logger.info(
@@ -399,11 +428,17 @@ class HashUpdater(SystemComponentBase):
                     'updated_count': updated_count,
                     'errors': errors
                 },
-                error=None if len(errors) == 0 else errors[0]
+                errors=errors
             )
             
         except Exception as e:
-            return self._handle_error(e, f"Failed to process {file_path}")
+            self._logger.error(f"Failed to process {file_path}: {e}")
+            return OperationResult(
+                success=False,
+                message=f"Failed to process {file_path}",
+                data={'file_path': str(file_path)},
+                errors=[str(e)]
+            )
     
     def process_all_files(self, components_dir: Path, dry_run: bool = False) -> OperationResult:
         """Process all YAML files in the components directory.
@@ -434,7 +469,7 @@ class HashUpdater(SystemComponentBase):
                     success=True,
                     message="No YAML files found to process",
                     data=self._stats,
-                    error=None
+                    errors=[]
                 )
             
             # Process each file
@@ -471,11 +506,17 @@ class HashUpdater(SystemComponentBase):
                     'successful_files': successful_files,
                     'errors': all_errors
                 },
-                error=None if len(all_errors) == 0 else f"{len(all_errors)} files had errors"
+                errors=all_errors
             )
             
         except Exception as e:
-            return self._handle_error(e, "Failed to process all files")
+            self._logger.error(f"Failed to process all files: {e}")
+            return OperationResult(
+                success=False,
+                message="Failed to process all files",
+                data=None,
+                errors=[str(e)]
+            )
     
     def get_statistics(self) -> Dict:
         """Get processing statistics.
