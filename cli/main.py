@@ -9,7 +9,7 @@ progress indicators, and intuitive commands for system management.
 import typer
 import sys
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict
 from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.config import ConfigurationManager, SystemConfiguration
 from core.exceptions import EnvironmentDevDeepEvaluationError
+from core.base import OperationResult
 from validation.schemas import ComponentModel
 from cli.utils import NetworkOperations
 from detection.unified_engine import UnifiedDetectionEngine
@@ -182,28 +183,53 @@ def list_components(
         table.add_column("Status", style="yellow")
         table.add_column("Version", style="green")
         table.add_column("Confiança", style="blue")
-        
+
         # Load components from YAML files
         components_dir = Path("components")
         if not components_dir.exists():
             console.print("[red]❌ Components directory not found[/red]")
             raise typer.Exit(1)
-        
-        component_count = 0
 
-        # Initialize detection engine to surface confidence when possible
-        detection_engine = None
+        # Collect entries first
+        import yaml
+        entries = []  # list of (name, data)
+        for yaml_file in components_dir.glob("*.yaml"):
+            try:
+                with open(yaml_file, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f)
+                if not isinstance(data, dict):
+                    continue
+                for component_name, component_data in data.items():
+                    if not isinstance(component_data, dict):
+                        continue
+                    if category and component_data.get('category', '').lower() != (category or '').lower():
+                        continue
+                    entries.append((component_name, component_data))
+            except Exception as e:
+                console.print(f"[yellow]⚠️ Warning: Could not load {yaml_file}: {e}[/yellow]")
+                continue
+
+        # Run detection to enrich status and confidence
+        present_set = set()
+        confidence_index = {}
         registry_index = []
         try:
             detection_engine = UnifiedDetectionEngine(get_config_manager())
             detection_engine.initialize()
+            # Analyze presence with engine (uses registry+CLI+sinônimos)
+            expected_names = [n for n, _ in entries]
+            report = detection_engine.analyze_environment_gaps(expected_names)
+            present_set = {n.lower() for n in report.present}
+            # Map engine confidence if provided
+            for k, v in (report.confidence_index or {}).items():
+                confidence_index[k.lower()] = getattr(v, 'value', 'unknown') if v is not None else 'unknown'
+            # Also build simple registry index as a fallback for confidence enrichment
             registry_apps = detection_engine.scan_registry_installations()
-            # Build simple index for name matching
             registry_index = [(app.name.lower(), getattr(app.detection_confidence, 'value', 'unknown')) for app in registry_apps]
         except Exception:
-            # Non-fatal: keep listing without confidence enrichment
+            # Non-fatal
             registry_index = []
-        
+
         def _format_confidence(value: str) -> str:
             mapping = {
                 "high": "[green]✅ alta[/green]",
@@ -213,61 +239,43 @@ def list_components(
             }
             return mapping.get((value or "").lower(), mapping["unknown"])
 
-        for yaml_file in components_dir.glob("*.yaml"):
-            try:
-                import yaml
-                with open(yaml_file, 'r', encoding='utf-8') as f:
-                    data = yaml.safe_load(f)
-                
-                if not isinstance(data, dict):
-                    continue
-                    
-                for component_name, component_data in data.items():
-                    if not isinstance(component_data, dict):
-                        continue
-                    
-                    # Apply category filter
-                    if category and component_data.get('category', '').lower() != category.lower():
-                        continue
-                    
-                    # Determine status (mock for now)
-                    status = "🟡 Available"  # Default status
-                    version = component_data.get('version', 'Unknown')
-                    
-                    # Apply status filters
-                    if installed_only and "Available" in status:
-                        continue
-                    if available_only and "Installed" in status:
-                        continue
-                    
-                    # Confidence matching (simple contains/equals)
-                    comp_lower = component_name.lower()
-                    confidence_value = "unknown"
-                    for app_name, conf in registry_index:
-                        if comp_lower == app_name or comp_lower in app_name or app_name in comp_lower:
-                            confidence_value = conf
-                            break
+        component_count = 0
+        for component_name, component_data in entries:
+            comp_lower = component_name.lower()
+            is_present = comp_lower in present_set
+            status = "✅ Installed" if is_present else "🟡 Available"
+            version = component_data.get('version', 'Unknown')
 
-                    table.add_row(
-                        component_name,
-                        component_data.get('category', 'Unknown'),
-                        component_data.get('description', 'No description'),
-                        status,
-                        version,
-                        _format_confidence(confidence_value)
-                    )
-                    component_count += 1
-                    
-            except Exception as e:
-                console.print(f"[yellow]⚠️ Warning: Could not load {yaml_file}: {e}[/yellow]")
+            # Apply status filters after detection
+            if installed_only and not is_present:
                 continue
-        
+            if available_only and is_present:
+                continue
+
+            # Resolve confidence: prefer engine index, then registry contains match
+            confidence_value = confidence_index.get(comp_lower, 'unknown')
+            if confidence_value == 'unknown':
+                for app_name, conf in registry_index:
+                    if comp_lower == app_name or comp_lower in app_name or app_name in comp_lower:
+                        confidence_value = conf
+                        break
+
+            table.add_row(
+                component_name,
+                component_data.get('category', 'Unknown'),
+                component_data.get('description', 'No description'),
+                status,
+                version,
+                _format_confidence(confidence_value)
+            )
+            component_count += 1
+
         if component_count == 0:
             console.print("[yellow]📭 No components found matching the criteria[/yellow]")
         else:
             console.print(table)
             console.print(f"\n[dim]Found {component_count} components[/dim]")
-            
+
     except Exception as e:
         console.print(f"[red]❌ Error listing components: {e}[/red]")
         raise typer.Exit(1)
@@ -302,11 +310,27 @@ def install(
 
         display_banner()
 
+        result = _install_component_internal(component_name=component, force=force, dry_run=dry_run)
+        if not result.success:
+            exit_code = int((result.data or {}).get("exit_code", 1))
+            raise typer.Exit(exit_code)
+    except typer.Exit:
+        raise
+    except Exception as e:
+        console.print(f"[red]❌ Installation failed: {e}[/red]")
+        raise typer.Exit(1)
+
+
+def _install_component_internal(component_name: str, force: bool = False, dry_run: bool = False) -> OperationResult:
+    """Instala um único componente com verificação RF005. Não encerra o processo.
+
+    Retorna OperationResult com data.exit_code apropriado (0 sucesso, outros em falhas).
+    """
+    try:
         # 1) Localizar definição do componente
         components_dir = Path("components")
         if not components_dir.exists():
-            console.print("[red]❌ Components directory not found[/red]")
-            raise typer.Exit(1)
+            return OperationResult(False, "Components directory not found", {"exit_code": 1})
 
         import yaml
         component_def = None
@@ -319,19 +343,19 @@ def install(
                 if not isinstance(data, dict):
                     continue
                 for name, comp in data.items():
-                    if isinstance(name, str) and isinstance(comp, dict) and name.lower() == component.lower():
+                    if isinstance(name, str) and isinstance(comp, dict) and name.lower() == component_name.lower():
                         component_def = comp
                         component_key = name
                         source_file = yaml_file
                         break
                 if component_def is not None:
                     break
-            except Exception as e:
-                console.print(f"[yellow]⚠️ Warning: Could not parse {yaml_file}: {e}[/yellow]")
+            except Exception:
+                continue
 
         if component_def is None:
-            console.print(f"[red]❌ Component '{component}' not found in components/*.yaml[/red]")
-            raise typer.Exit(1)
+            console.print(f"[red]❌ Component '{component_name}' not found in components/*.yaml[/red]")
+            return OperationResult(False, "Component not found", {"exit_code": 1})
 
         # 2) Validações de segurança: hash obrigatório e não-placeholder
         hash_value = component_def.get("hash")
@@ -339,28 +363,34 @@ def install(
         install_method = component_def.get("install_method", "").lower()
 
         placeholders = {"HASH_NEEDS_UPDATE", "HASH_PENDENTE_VERIFICACAO"}
-        if not hash_value or (isinstance(hash_value, str) and hash_value.strip() in placeholders):
-            console.print(
-                Panel(
-                    "[red]❌ Política de segurança: hash obrigatório ausente ou pendente[/red]\n\n"
-                    "Este projeto exige verificação de integridade (RF005). Atualize os hashes antes de instalar.\n"
-                    "Use: [bold]python scripts/hash_updater.py --components-dir components[/bold]",
-                    title="Hash inválido",
-                    border_style="red",
+        if install_method in {"exe", "msi", "zip"}:
+            if not hash_value or (isinstance(hash_value, str) and hash_value.strip() in placeholders):
+                console.print(
+                    Panel(
+                        "[red]❌ Política de segurança: hash obrigatório ausente ou pendente[/red]\n\n"
+                        "Este projeto exige verificação de integridade (RF005). Atualize os hashes antes de instalar.\n"
+                        "Use: [bold]python scripts/hash_updater.py --components-dir components[/bold]",
+                        title="Hash inválido",
+                        border_style="red",
+                    )
                 )
-            )
-            raise typer.Exit(2)
+                return OperationResult(False, "Missing required hash", {"exit_code": 2}, errors=["hash ausente/placeholder (RF005)"])
+            if not download_url:
+                console.print(
+                    Panel(
+                        "[red]❌ download_url ausente no componente[/red]\n\n"
+                        f"Corrija o arquivo: [bold]{source_file} → {component_key}[/bold]",
+                        title="Definição incompleta",
+                        border_style="red",
+                    )
+                )
+                return OperationResult(False, "download_url ausente", {"exit_code": 2})
 
-        if not download_url:
-            console.print(
-                Panel(
-                    "[red]❌ download_url ausente no componente[/red]\n\n"
-                    f"Corrija o arquivo: [bold]{source_file} → {component_key}[/bold]",
-                    title="Definição incompleta",
-                    border_style="red",
-                )
-            )
-            raise typer.Exit(2)
+        if install_method == "pip":
+            # RF005 também exige hash para pip
+            if not hash_value or (isinstance(hash_value, str) and hash_value.strip() in placeholders):
+                console.print(Panel("[red]❌ PIP requer hash válido (RF005)\nAtualize com o hash_updater.[/red]", border_style="red"))
+                return OperationResult(False, "Missing required hash for pip", {"exit_code": 2})
 
         # 3) Download/instalação com verificação real de SHA256
         cfg = get_config_manager().get_config()
@@ -368,8 +398,8 @@ def install(
         downloads_dir.mkdir(parents=True, exist_ok=True)
 
         from urllib.parse import urlparse
-        parsed = urlparse(download_url)
-        filename = Path(parsed.path).name or f"{component_key}.download"
+        parsed = urlparse(download_url or "")
+        filename = Path(parsed.path).name or f"{component_key or component_name}.download"
         destination = downloads_dir / filename
 
         # alternative_urls
@@ -379,6 +409,10 @@ def install(
 
         # Fluxos por método
         if install_method in {"exe", "msi", "zip"}:
+            if dry_run:
+                console.print(f"[yellow]DRY RUN:[/yellow] {component_key} → baixaria/verificaria artefato")
+                return OperationResult(True, "Dry-run success", {"exit_code": 0})
+
             with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
                 task = progress.add_task(f"Baixando {component_key}...", total=None)
                 res = NetworkOperations.download_with_fallback(
@@ -396,49 +430,45 @@ def install(
             if not res.success:
                 details = "\n".join(res.errors or [res.message])
                 console.print(Panel(f"[red]❌ Falha no download/verificação[/red]\n{details}", border_style="red"))
-                raise typer.Exit(3)
+                return OperationResult(False, "Falha no download/verificação", {"exit_code": 3}, errors=res.errors)
 
             console.print(Panel(f"[green]✅ Artefato pronto:[/green] {destination}", border_style="green"))
 
-            # Execução silenciosa básica (Windows)
             if install_method == "exe":
                 args = component_def.get("install_args") or "/S"
                 try:
                     proc = subprocess.run([str(destination), *str(args).split()], capture_output=True, text=True, timeout=3600)
                     if proc.returncode != 0:
                         console.print(Panel(f"[red]❌ Instalador retornou código {proc.returncode}[/red]\n{proc.stderr}", border_style="red"))
-                        raise typer.Exit(4)
+                        return OperationResult(False, "Installer error", {"exit_code": 4}, errors=[proc.stderr or "installer returned non-zero"])
                     console.print(Panel("[green]✅ Instalação concluída[/green]", border_style="green"))
                 except Exception as e:
                     console.print(f"[red]❌ Falha ao executar instalador: {e}[/red]")
-                    raise typer.Exit(4)
+                    return OperationResult(False, "Falha ao executar instalador", {"exit_code": 4}, errors=[str(e)])
             elif install_method == "msi":
-                # msiexec /i file.msi /qn
                 try:
                     proc = subprocess.run(["msiexec", "/i", str(destination), "/qn"], capture_output=True, text=True, timeout=3600)
                     if proc.returncode != 0:
                         console.print(Panel(f"[red]❌ msiexec retornou código {proc.returncode}[/red]\n{proc.stderr}", border_style="red"))
-                        raise typer.Exit(4)
+                        return OperationResult(False, "msiexec error", {"exit_code": 4}, errors=[proc.stderr or "msiexec returned non-zero"])
                     console.print(Panel("[green]✅ Instalação MSI concluída[/green]", border_style="green"))
                 except Exception as e:
                     console.print(f"[red]❌ Falha msiexec: {e}[/red]")
-                    raise typer.Exit(4)
+                    return OperationResult(False, "Falha msiexec", {"exit_code": 4}, errors=[str(e)])
             else:
-                # zip: apenas confirma integridade; extração é opcional do usuário
                 console.print(Panel("[green]✅ ZIP verificado. Extraia manualmente ou implemente handler dedicado.[/green]", border_style="green"))
+            return OperationResult(True, "Installed", {"exit_code": 0})
 
         elif install_method == "pip":
-            # Política: instalar offline a partir de wheel verificado
             pypi_name = component_def.get("pypi_name")
             version = component_def.get("version")
             if not pypi_name or not version:
                 console.print(Panel("[red]❌ PIP requer pypi_name e version[/red]", border_style="red"))
-                raise typer.Exit(2)
+                return OperationResult(False, "pip missing fields", {"exit_code": 2})
 
             dist_dir = downloads_dir / ".dist"
             dist_dir.mkdir(parents=True, exist_ok=True)
 
-            # Preferir wheel específica via download_url/alternative_urls, com verificação RF005
             use_provided_wheel = False
             wheel_path = None
             if download_url:
@@ -451,8 +481,11 @@ def install(
             size_limit = component_def.get("size_mb")
             size_limit = int(size_limit) if size_limit else None
 
+            if dry_run:
+                console.print(f"[yellow]DRY RUN:[/yellow] {component_key} → validaria wheel e instalaria offline")
+                return OperationResult(True, "Dry-run success", {"exit_code": 0})
+
             if use_provided_wheel:
-                # Baixa a wheel previamente (ou copia de file://) com verificação de hash
                 destination_wheel = dist_dir / Path(urlparse(download_url).path).name
                 with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
                     task = progress.add_task(f"Baixando wheel {pypi_name}...", total=None)
@@ -467,51 +500,132 @@ def install(
                         show_progress=True,
                     )
                     progress.update(task, completed=1)
-
                 if not res.success:
                     details = "\n".join(res.errors or [res.message])
                     console.print(Panel(f"[red]❌ Falha no download/verificação da wheel[/red]\n{details}", border_style="red"))
-                    raise typer.Exit(3)
+                    return OperationResult(False, "Wheel download/verify failed", {"exit_code": 3}, errors=res.errors)
                 wheel_path = destination_wheel
             else:
-                # Fluxo atual: pip download para obter wheel, depois verificar hash e instalar offline
                 download_cmd = [
                     sys.executable, "-m", "pip", "download", "--only-binary=:all:", "--dest", str(dist_dir), f"{pypi_name}=={version}"
                 ]
                 proc = subprocess.run(download_cmd, capture_output=True, text=True, timeout=1800)
                 if proc.returncode != 0:
                     console.print(Panel(f"[red]❌ Falha ao baixar wheel[/red]\n{proc.stderr}", border_style="red"))
-                    raise typer.Exit(3)
-
+                    return OperationResult(False, "pip download failed", {"exit_code": 3}, errors=[proc.stderr or "pip download failed"])
                 wheels = list(dist_dir.glob(f"{pypi_name.replace('-', '_')}*.whl"))
                 if not wheels:
                     console.print(Panel("[red]❌ Wheel não encontrado após download[/red]", border_style="red"))
-                    raise typer.Exit(3)
+                    return OperationResult(False, "wheel not found", {"exit_code": 3})
                 wheel_path = wheels[0]
-
                 vr = NetworkOperations.verify_sha256(wheel_path, str(hash_value))
                 if not vr.success:
                     console.print(Panel(f"[red]❌ Hash inválido da wheel[/red]\n{vr.message}\n{vr.errors}", border_style="red"))
-                    raise typer.Exit(3)
+                    return OperationResult(False, "wheel hash mismatch", {"exit_code": 3}, errors=vr.errors)
 
-            # Instalação offline a partir de dist_dir
             install_cmd = [
                 sys.executable, "-m", "pip", "install", "--no-index", "--find-links", str(dist_dir), str(wheel_path), "--no-warn-script-location"
             ]
             proc2 = subprocess.run(install_cmd, capture_output=True, text=True, timeout=1800)
             if proc2.returncode != 0:
                 console.print(Panel(f"[red]❌ pip install falhou[/red]\n{proc2.stderr}", border_style="red"))
-                raise typer.Exit(4)
+                return OperationResult(False, "pip install failed", {"exit_code": 4}, errors=[proc2.stderr or "pip install failed"])
             console.print(Panel("[green]✅ Pacote pip instalado offline com verificação de hash[/green]", border_style="green"))
-
+            return OperationResult(True, "Installed", {"exit_code": 0})
         else:
             console.print(Panel(f"[yellow]⚠️ Método '{install_method}' não implementado neste comando[/yellow]", border_style="yellow"))
+            return OperationResult(False, "install method not implemented", {"exit_code": 1})
+    except Exception as e:
+        return OperationResult(False, f"Erro inesperado: {e}", {"exit_code": 1}, errors=[str(e)])
 
+
+@app.command("install-many")
+def install_many(
+    components: List[str] = typer.Argument(..., help="Lista de componentes a instalar"),
+    force: bool = typer.Option(False, "--force", "-f", help="Força reinstalação"),
+    dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Não instala; apenas simula"),
+    continue_on_error: bool = typer.Option(True, "--continue/--no-continue", help="Continua após erros")
+):
+    """Instala múltiplos componentes, resolvendo dependências com RF005 estrito (por item)."""
+    try:
+        display_banner()
+
+        # Montar ComponentsFile unificado a partir de todos os YAMLs
+        import yaml
+        from validation.schemas import ComponentsFile, ComponentModel
+        all_components: Dict[str, ComponentModel] = {}
+        comp_dir = Path("components")
+        for yml in comp_dir.glob("*.yaml"):
+            try:
+                with open(yml, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                if not isinstance(data, dict):
+                    continue
+                for name, comp in data.items():
+                    if isinstance(name, str) and isinstance(comp, dict):
+                        try:
+                            all_components[name] = ComponentModel(**comp)
+                        except Exception:
+                            # ignora inválidos nesta fase; instalador verificará diretamente
+                            pass
+            except Exception:
+                continue
+
+        if not all_components:
+            console.print("[red]❌ Nenhum componente carregado de components/*.yaml[/red]")
+            raise typer.Exit(1)
+
+        cf = ComponentsFile(components=all_components)
+        from validation.schemas import get_component_dependencies
+
+        # Resolver ordem: deps primeiro
+        ordered_unique: List[str] = []
+        seen = set()
+        for name in components:
+            if name not in cf.components:
+                console.print(f"[yellow]⚠️ '{name}' não está definido; será ignorado[/yellow]")
+                continue
+            deps = get_component_dependencies(cf, name)
+            for dep in deps + [name]:
+                if dep not in seen:
+                    seen.add(dep)
+                    ordered_unique.append(dep)
+
+        if not ordered_unique:
+            console.print("[yellow]Nenhum componente válido para instalar[/yellow]")
+            return
+
+        # Executar instalações em ordem
+        summary: List[Dict[str, str]] = []
+        for idx, name in enumerate(ordered_unique, start=1):
+            console.print(Panel(f"[{idx}/{len(ordered_unique)}] Instalando [bold]{name}[/bold]", border_style="blue"))
+            res = _install_component_internal(name, force=force, dry_run=dry_run)
+            status = "✅ Sucesso" if res.success else "❌ Falha"
+            summary.append({"name": name, "status": status, "details": res.message})
+            if not res.success and not continue_on_error:
+                console.print("[red]Interrompendo por erro e --no-continue[/red]")
+                break
+
+        # Tabela resumo
+        table = Table(title="Resumo da Instalação Múltipla")
+        table.add_column("Componente", style="cyan")
+        table.add_column("Status", style="white")
+        table.add_column("Detalhes", style="dim")
+        for item in summary:
+            table.add_row(item["name"], item["status"], item.get("details", ""))
+        console.print(table)
+
+        # Código de saída: 0 se todos sucesso; 2 se houve falha de RF005; 1 para demais
+        any_fail = any(s["status"].startswith("❌") for s in summary)
+        if any_fail:
+            # tentar detectar alguma falha RF005 por mensagem
+            if any("hash" in (s.get("details", "").lower()) for s in summary):
+                raise typer.Exit(2)
+            raise typer.Exit(1)
     except typer.Exit:
-        # Preserva códigos de saída explícitos definidos acima (ex.: 2, 3, 4)
         raise
     except Exception as e:
-        console.print(f"[red]❌ Installation failed: {e}[/red]")
+        console.print(f"[red]❌ Falha na instalação múltipla: {e}[/red]")
         raise typer.Exit(1)
 
 
