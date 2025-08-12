@@ -9,6 +9,7 @@ Obrigado por contribuir! Siga as diretrizes para manter a qualidade e coerência
   - `chore(<escopo>): <descrição>`
   - `docs(<escopo>): <descrição>`
   - `test(<escopo>): <descrição>`
+  - exemplos: `feat(cli): adicionar install-many`, `fix(components): corrigir URL do Wireshark`, `test(cli): cobrir doctor`
 
 ## Código
 - Padrões: PEP 8.
@@ -19,6 +20,11 @@ Obrigado por contribuir! Siga as diretrizes para manter a qualidade e coerência
 ## Testes
 - Rode `pytest -q` e mantenha “verde”.
 - Mocke rede/FS nos testes que exigem I/O.
+ - Cobertura mínima recomendada para novas features: adicionar pelo menos 1 teste positivo e 1 negativo.
 
 ## Segurança
 - RF005 é obrigatório para métodos com download e para `pip` (wheel offline com SHA256). Placeholders são rejeitados.
+
+## CI (GitHub Actions)
+- Recomenda-se configurar um workflow básico para rodar `pytest -q` e linter em cada push/PR.
+  - Exemplo de passos: `actions/setup-python`, instalar deps de test, `pytest -q`.
