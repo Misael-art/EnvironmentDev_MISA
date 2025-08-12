@@ -34,6 +34,7 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.config import ConfigurationManager
+from detection.unified_engine import UnifiedDetectionEngine
 from core.exceptions import EnvironmentDevDeepEvaluationError
 
 
@@ -102,16 +103,48 @@ class ComponentsScreen(Screen):
     def setup_table(self) -> None:
         """Setup the components table."""
         table = self.query_one("#components-table", DataTable)
-        table.add_columns("Name", "Category", "Version", "Status")
+        table.add_columns("Name", "Category", "Version", "Status", "Confiança")
         
+        # Try to enrich with detection confidence from registry
+        confidence_index = {}
+        try:
+            engine = UnifiedDetectionEngine(ConfigurationManager())
+            engine.initialize()
+            registry_apps = engine.scan_registry_installations()
+            confidence_index = {app.name.lower(): getattr(app.detection_confidence, 'value', 'unknown') for app in registry_apps}
+        except Exception:
+            confidence_index = {}
+
+        def _format_confidence(value: str) -> str:
+            mapping = {
+                "high": "[green]✅ alta[/green]",
+                "medium": "[yellow]🟡 média[/yellow]",
+                "low": "[red]⚠️ baixa[/red]",
+                "unknown": "[dim]❔ desconhecida[/dim]",
+            }
+            return mapping.get((value or "").lower(), mapping["unknown"])
+
         for name, data in self.components_data.items():
             if isinstance(data, dict):
                 status = "🟡 Available"  # Mock status
+                # naive name match for confidence
+                comp_lower = name.lower()
+                confidence = "unknown"
+                if comp_lower in confidence_index:
+                    confidence = confidence_index[comp_lower]
+                else:
+                    # try contains match
+                    for reg_name, conf in confidence_index.items():
+                        if comp_lower in reg_name or reg_name in comp_lower:
+                            confidence = conf
+                            break
+
                 table.add_row(
                     name,
                     data.get('category', 'Unknown'),
                     data.get('version', 'Unknown'),
                     status,
+                    _format_confidence(confidence),
                     key=name
                 )
     
@@ -204,11 +237,23 @@ class ComponentsScreen(Screen):
                     query_lower in data.get('description', '').lower()):
                     
                     status = "🟡 Available"  # Mock status
+                    # naive name match for confidence during filter as well
+                    comp_lower = name.lower()
+                    confidence = "unknown"
+                    if comp_lower in confidence_index:
+                        confidence = confidence_index[comp_lower]
+                    else:
+                        for reg_name, conf in confidence_index.items():
+                            if comp_lower in reg_name or reg_name in comp_lower:
+                                confidence = conf
+                                break
+
                     table.add_row(
                         name,
                         data.get('category', 'Unknown'),
                         data.get('version', 'Unknown'),
                         status,
+                        confidence,
                         key=name
                     )
     
@@ -224,9 +269,17 @@ class ComponentsScreen(Screen):
             self.notify("Please select a component to install", severity="warning")
             return
         
-        # Mock installation
-        self.notify(f"Installing {self.selected_component}...", severity="information")
-        # Here would be the actual installation logic
+        # Disparar CLI real com RF005 (instalação com verificação de hash)
+        try:
+            from subprocess import run
+            proc = run([sys.executable, "-m", "cli.main", "install", self.selected_component], capture_output=True, text=True)
+            if proc.returncode == 0:
+                self.notify(f"Installed {self.selected_component}", severity="information")
+            else:
+                msg = proc.stderr or proc.stdout or "Erro desconhecido"
+                self.notify(f"Falha ao instalar {self.selected_component}: {msg}", severity="error")
+        except Exception as e:
+            self.notify(f"Erro ao executar instalação: {e}", severity="error")
     
     def action_details(self) -> None:
         """Show detailed component information."""
