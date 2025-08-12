@@ -65,10 +65,11 @@ class ComponentsScreen(Screen):
                     yield Input(placeholder="Search components...", id="search-input")
                     yield DataTable(id="components-table")
                     
-                    with Horizontal(id="component-actions"):
-                        yield Button("Install", id="install-btn", variant="primary")
-                        yield Button("Details", id="details-btn", variant="default")
-                        yield Button("Refresh", id="refresh-btn", variant="default")
+            with Horizontal(id="component-actions"):
+                yield Button("Install", id="install-btn", variant="primary")
+                yield Button("Install Filtered", id="install-many-btn", variant="default")
+                yield Button("Details", id="details-btn", variant="default")
+                yield Button("Refresh", id="refresh-btn", variant="default")
                 
                 # Right panel - Component details
                 with Vertical(id="details-panel"):
@@ -104,6 +105,7 @@ class ComponentsScreen(Screen):
         """Setup the components table."""
         table = self.query_one("#components-table", DataTable)
         table.add_columns("Name", "Category", "Version", "Status", "Confiança")
+        table.clear()
         
         # Try to enrich with detection confidence from registry
         confidence_index = {}
@@ -147,6 +149,7 @@ class ComponentsScreen(Screen):
                     _format_confidence(confidence),
                     key=name
                 )
+        table.cursor_type = "row"
     
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """Handle row selection in components table."""
@@ -213,6 +216,8 @@ class ComponentsScreen(Screen):
         """Handle button presses."""
         if event.button.id == "install-btn":
             self.action_install()
+        elif event.button.id == "install-many-btn":
+            self.action_install_filtered()
         elif event.button.id == "details-btn":
             self.action_details()
         elif event.button.id == "refresh-btn":
@@ -256,6 +261,7 @@ class ComponentsScreen(Screen):
                         confidence,
                         key=name
                     )
+        table.cursor_type = "row"
     
     def action_refresh(self) -> None:
         """Refresh components list."""
@@ -280,6 +286,34 @@ class ComponentsScreen(Screen):
                 self.notify(f"Falha ao instalar {self.selected_component}: {msg}", severity="error")
         except Exception as e:
             self.notify(f"Erro ao executar instalação: {e}", severity="error")
+
+    def action_install_filtered(self) -> None:
+        """Install all components currently displayed (filtered list) via install-many."""
+        try:
+            table = self.query_one("#components-table", DataTable)
+            # Coleta de nomes exibidos (ordem atual)
+            names = []
+            for row_key in table.rows.keys():
+                try:
+                    names.append(str(row_key))
+                except Exception:
+                    pass
+            if not names:
+                self.notify("Nenhum componente visível para instalar", severity="warning")
+                return
+            self.notify(f"Instalando {len(names)} componentes filtrados...", severity="information")
+            from subprocess import run
+            # Chama install-many com --continue
+            cmd = [sys.executable, "-m", "cli.main", "install-many", *names, "--continue"]
+            # Execução síncrona simples; Textual suporta background com threads, mas mantemos curto
+            proc = run(cmd, capture_output=True, text=True)
+            if proc.returncode == 0:
+                self.notify("Instalação múltipla concluída", severity="information")
+            else:
+                msg = proc.stderr or proc.stdout or "Erro desconhecido"
+                self.notify(f"Falhas na instalação múltipla: {msg}", severity="error")
+        except Exception as e:
+            self.notify(f"Erro em instalação múltipla: {e}", severity="error")
     
     def action_details(self) -> None:
         """Show detailed component information."""
