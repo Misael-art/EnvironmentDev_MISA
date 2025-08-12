@@ -204,6 +204,15 @@ def list_components(
             # Non-fatal: keep listing without confidence enrichment
             registry_index = []
         
+        def _format_confidence(value: str) -> str:
+            mapping = {
+                "high": "[green]✅ alta[/green]",
+                "medium": "[yellow]🟡 média[/yellow]",
+                "low": "[red]⚠️ baixa[/red]",
+                "unknown": "[dim]❔ desconhecida[/dim]",
+            }
+            return mapping.get((value or "").lower(), mapping["unknown"])
+
         for yaml_file in components_dir.glob("*.yaml"):
             try:
                 import yaml
@@ -245,7 +254,7 @@ def list_components(
                         component_data.get('description', 'No description'),
                         status,
                         version,
-                        confidence_value
+                        _format_confidence(confidence_value)
                     )
                     component_count += 1
                     
@@ -353,7 +362,7 @@ def install(
             )
             raise typer.Exit(2)
 
-        # 3) Download com verificação real de SHA256
+        # 3) Download/instalação com verificação real de SHA256
         cfg = get_config_manager().get_config()
         downloads_dir = Path(cfg.downloads_directory)
         downloads_dir.mkdir(parents=True, exist_ok=True)
@@ -363,32 +372,140 @@ def install(
         filename = Path(parsed.path).name or f"{component_key}.download"
         destination = downloads_dir / filename
 
-        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
-            task = progress.add_task(f"Baixando {component_key}...", total=None)
-            ok = NetworkOperations.download_file(
-                url=download_url,
-                destination=destination,
-                expected_hash=str(hash_value),
-                show_progress=True,
-            )
-            progress.update(task, completed=1)
+        # alternative_urls
+        alt_urls = component_def.get("alternative_urls") or []
+        size_limit = component_def.get("size_mb")
+        size_limit = int(size_limit) if size_limit else None
 
-        if not ok:
-            console.print("[red]❌ Falha no download ou verificação de hash[/red]")
-            raise typer.Exit(3)
+        # Fluxos por método
+        if install_method in {"exe", "msi", "zip"}:
+            with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
+                task = progress.add_task(f"Baixando {component_key}...", total=None)
+                res = NetworkOperations.download_with_fallback(
+                    primary_url=download_url,
+                    alternative_urls=alt_urls,
+                    destination=destination,
+                    expected_sha256=str(hash_value),
+                    timeout=int(getattr(cfg, 'download_timeout', 300)),
+                    max_retries=int(getattr(cfg, 'max_download_retries', 3)),
+                    max_size_mb=size_limit,
+                    show_progress=True,
+                )
+                progress.update(task, completed=1)
 
-        # 4) Instalação (wire-up futuro). Evitar simulação enganosa.
-        console.print(
-            Panel(
-                "[green]✅ Download concluído e hash verificado[/green]\n\n"
-                f"Arquivo: {destination}\n"
-                f"install_method: {install_method}\n\n"
-                "A etapa de instalação ainda não está integrada ao [bold]InstallationManager[/bold].\n"
-                "Próximo passo: conectar gerenciamento real de instalação conforme interfaces em installation/.",
-                title="Preparado para instalação",
-                border_style="green",
-            )
-        )
+            if not res.success:
+                details = "\n".join(res.errors or [res.message])
+                console.print(Panel(f"[red]❌ Falha no download/verificação[/red]\n{details}", border_style="red"))
+                raise typer.Exit(3)
+
+            console.print(Panel(f"[green]✅ Artefato pronto:[/green] {destination}", border_style="green"))
+
+            # Execução silenciosa básica (Windows)
+            if install_method == "exe":
+                args = component_def.get("install_args") or "/S"
+                try:
+                    proc = subprocess.run([str(destination), *str(args).split()], capture_output=True, text=True, timeout=3600)
+                    if proc.returncode != 0:
+                        console.print(Panel(f"[red]❌ Instalador retornou código {proc.returncode}[/red]\n{proc.stderr}", border_style="red"))
+                        raise typer.Exit(4)
+                    console.print(Panel("[green]✅ Instalação concluída[/green]", border_style="green"))
+                except Exception as e:
+                    console.print(f"[red]❌ Falha ao executar instalador: {e}[/red]")
+                    raise typer.Exit(4)
+            elif install_method == "msi":
+                # msiexec /i file.msi /qn
+                try:
+                    proc = subprocess.run(["msiexec", "/i", str(destination), "/qn"], capture_output=True, text=True, timeout=3600)
+                    if proc.returncode != 0:
+                        console.print(Panel(f"[red]❌ msiexec retornou código {proc.returncode}[/red]\n{proc.stderr}", border_style="red"))
+                        raise typer.Exit(4)
+                    console.print(Panel("[green]✅ Instalação MSI concluída[/green]", border_style="green"))
+                except Exception as e:
+                    console.print(f"[red]❌ Falha msiexec: {e}[/red]")
+                    raise typer.Exit(4)
+            else:
+                # zip: apenas confirma integridade; extração é opcional do usuário
+                console.print(Panel("[green]✅ ZIP verificado. Extraia manualmente ou implemente handler dedicado.[/green]", border_style="green"))
+
+        elif install_method == "pip":
+            # Política: instalar offline a partir de wheel verificado
+            pypi_name = component_def.get("pypi_name")
+            version = component_def.get("version")
+            if not pypi_name or not version:
+                console.print(Panel("[red]❌ PIP requer pypi_name e version[/red]", border_style="red"))
+                raise typer.Exit(2)
+
+            dist_dir = downloads_dir / ".dist"
+            dist_dir.mkdir(parents=True, exist_ok=True)
+
+            # Preferir wheel específica via download_url/alternative_urls, com verificação RF005
+            use_provided_wheel = False
+            wheel_path = None
+            if download_url:
+                from urllib.parse import urlparse as _urlparse
+                parsed_dl = _urlparse(download_url)
+                filename_dl = Path(parsed_dl.path).name.lower()
+                if filename_dl.endswith(".whl"):
+                    use_provided_wheel = True
+            alt_urls = component_def.get("alternative_urls") or []
+            size_limit = component_def.get("size_mb")
+            size_limit = int(size_limit) if size_limit else None
+
+            if use_provided_wheel:
+                # Baixa a wheel previamente (ou copia de file://) com verificação de hash
+                destination_wheel = dist_dir / Path(urlparse(download_url).path).name
+                with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
+                    task = progress.add_task(f"Baixando wheel {pypi_name}...", total=None)
+                    res = NetworkOperations.download_with_fallback(
+                        primary_url=download_url,
+                        alternative_urls=alt_urls,
+                        destination=destination_wheel,
+                        expected_sha256=str(hash_value),
+                        timeout=int(getattr(cfg, 'download_timeout', 300)),
+                        max_retries=int(getattr(cfg, 'max_download_retries', 3)),
+                        max_size_mb=size_limit,
+                        show_progress=True,
+                    )
+                    progress.update(task, completed=1)
+
+                if not res.success:
+                    details = "\n".join(res.errors or [res.message])
+                    console.print(Panel(f"[red]❌ Falha no download/verificação da wheel[/red]\n{details}", border_style="red"))
+                    raise typer.Exit(3)
+                wheel_path = destination_wheel
+            else:
+                # Fluxo atual: pip download para obter wheel, depois verificar hash e instalar offline
+                download_cmd = [
+                    sys.executable, "-m", "pip", "download", "--only-binary=:all:", "--dest", str(dist_dir), f"{pypi_name}=={version}"
+                ]
+                proc = subprocess.run(download_cmd, capture_output=True, text=True, timeout=1800)
+                if proc.returncode != 0:
+                    console.print(Panel(f"[red]❌ Falha ao baixar wheel[/red]\n{proc.stderr}", border_style="red"))
+                    raise typer.Exit(3)
+
+                wheels = list(dist_dir.glob(f"{pypi_name.replace('-', '_')}*.whl"))
+                if not wheels:
+                    console.print(Panel("[red]❌ Wheel não encontrado após download[/red]", border_style="red"))
+                    raise typer.Exit(3)
+                wheel_path = wheels[0]
+
+                vr = NetworkOperations.verify_sha256(wheel_path, str(hash_value))
+                if not vr.success:
+                    console.print(Panel(f"[red]❌ Hash inválido da wheel[/red]\n{vr.message}\n{vr.errors}", border_style="red"))
+                    raise typer.Exit(3)
+
+            # Instalação offline a partir de dist_dir
+            install_cmd = [
+                sys.executable, "-m", "pip", "install", "--no-index", "--find-links", str(dist_dir), str(wheel_path), "--no-warn-script-location"
+            ]
+            proc2 = subprocess.run(install_cmd, capture_output=True, text=True, timeout=1800)
+            if proc2.returncode != 0:
+                console.print(Panel(f"[red]❌ pip install falhou[/red]\n{proc2.stderr}", border_style="red"))
+                raise typer.Exit(4)
+            console.print(Panel("[green]✅ Pacote pip instalado offline com verificação de hash[/green]", border_style="green"))
+
+        else:
+            console.print(Panel(f"[yellow]⚠️ Método '{install_method}' não implementado neste comando[/yellow]", border_style="yellow"))
 
     except Exception as e:
         console.print(f"[red]❌ Installation failed: {e}[/red]")
@@ -396,37 +513,88 @@ def install(
 
 
 @app.command()
-def analyze_gaps():
-    """
-    🔍 Analyze system gaps and missing components.
-    
-    Performs a comprehensive analysis of the current environment
-    to identify missing tools and dependencies.
-    """
+def analyze_gaps(
+    category: Optional[str] = typer.Option(None, "--category", "-c", help="Filtrar componentes por categoria"),
+    name_filter: Optional[str] = typer.Option(None, "--name", "-n", help="Filtrar por nome (contains, case-insensitive)"),
+    output_json: bool = typer.Option(False, "--json", help="Saída em JSON"),
+    fail_on_missing: bool = typer.Option(True, "--fail-on-missing/--no-fail-on-missing", help="Retorna código ≠0 se houver lacunas")
+):
+    """Analisa lacunas do ambiente do usuário usando a UnifiedDetectionEngine."""
     try:
         display_banner()
 
-        # Integração mínima com UnifiedDetectionEngine (sem simulação)
-        from detection.unified_engine import UnifiedDetectionEngine
+        components_dir = Path("components")
+        if not components_dir.exists():
+            console.print("[red]❌ Diretório 'components' não encontrado[/red]")
+            raise typer.Exit(1)
 
-        engine = UnifiedDetectionEngine(get_config_manager())
-        engine.initialize()
+        import yaml
+        expected: List[str] = []
+        for yaml_file in components_dir.glob("*.yaml"):
+            try:
+                with open(yaml_file, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                if not isinstance(data, dict):
+                    continue
+                for comp_name, comp_data in data.items():
+                    if not isinstance(comp_data, dict):
+                        continue
+                    if category and comp_data.get("category", "").lower() != category.lower():
+                        continue
+                    if name_filter and name_filter.lower() not in comp_name.lower():
+                        continue
+                    expected.append(comp_name)
+            except Exception:
+                continue
 
-        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
-            task = progress.add_task("Executando detecção unificada...", total=None)
-            detection_result = engine.detect_all_applications()
-            progress.update(task, completed=1)
+        # Executa a engine com tolerância a falhas: se falhar, considerar tudo ausente
+        try:
+            engine = UnifiedDetectionEngine(get_config_manager())
+            engine.initialize()
+            with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
+                task = progress.add_task("Analisando lacunas no ambiente...", total=None)
+                report = engine.analyze_environment_gaps(expected)
+                progress.update(task, completed=1)
+        except Exception as eng_err:
+            # Fallback seguro: tudo ausente com mensagem clara
+            from detection.interfaces import GapReport  # type: ignore
+            report = GapReport(
+                expected_count=len(expected),
+                present_count=0,
+                missing_count=len(expected),
+                present=[],
+                missing=expected,
+                confidence_index={},
+            )
+            console.print(Panel(f"[yellow]⚠️ Engine de detecção falhou[/yellow]\n{eng_err}", title="Fallback aplicado", border_style="yellow"))
 
-        # Exibir resultado real da engine
-        tree = Tree("🔍 Gap Analysis (Detecção Unificada)")
-        summary = tree.add("📊 Resumo de Detecção")
-        summary.add(f"Detectado: {detection_result.detected}")
-        summary.add(f"Método principal: {getattr(detection_result.method, 'value', detection_result.method)}")
-        summary.add(f"Confiança: {getattr(detection_result.confidence, 'value', detection_result.confidence)}")
-        summary.add(f"Detalhes: {getattr(detection_result, 'details', {})}")
+        if output_json:
+            import json
+            console.print_json(json.dumps({
+                "expected": report.expected_count,
+                "present": report.present_count,
+                "missing": report.missing_count,
+                "present_list": report.present,
+                "missing_list": report.missing,
+            }))
+        else:
+            table = Table(title="🔍 Lacunas do Ambiente")
+            table.add_column("Status", style="cyan")
+            table.add_column("Componente", style="white")
+            table.add_column("Confiança", style="blue")
+            for name in report.present:
+                conf = report.confidence_index.get(name)
+                conf_val = getattr(conf, 'value', str(conf) if conf else 'unknown')
+                table.add_row("✅ Presente", name, conf_val)
+            for name in report.missing:
+                table.add_row("❌ Ausente", name, "-")
+            console.print(table)
+            console.print(f"[dim]Esperados: {report.expected_count}  |  Presentes: {report.present_count}  |  Ausentes: {report.missing_count}[/dim]")
 
-        console.print(tree)
-
+        if fail_on_missing and report.missing_count > 0:
+            raise typer.Exit(2)
+    except typer.Exit:
+        raise
     except Exception as e:
         console.print(f"[red]❌ Analysis failed: {e}[/red]")
         raise typer.Exit(1)
