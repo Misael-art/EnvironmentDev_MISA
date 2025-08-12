@@ -27,6 +27,10 @@ from core.exceptions import EnvironmentDevDeepEvaluationError
 from validation.schemas import ComponentModel
 from cli.utils import NetworkOperations
 from detection.unified_engine import UnifiedDetectionEngine
+import shutil
+import zipfile
+import subprocess
+from datetime import datetime
 
 # Initialize CLI app and console
 app = typer.Typer(
@@ -425,6 +429,138 @@ def analyze_gaps():
 
     except Exception as e:
         console.print(f"[red]❌ Analysis failed: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def backup(
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Caminho do arquivo .zip de backup de componentes"
+    )
+):
+    """
+    💾 Cria backup dos arquivos de componentes (.yaml).
+    """
+    try:
+        cfg = get_config_manager().get_config()
+        components_dir = Path("components")
+        if not components_dir.exists():
+            console.print("[red]❌ Diretório 'components' não encontrado[/red]")
+            raise typer.Exit(1)
+
+        backups_dir = Path(cfg.backups_directory)
+        backups_dir.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_path = Path(output) if output else backups_dir / f"components_backup_{stamp}.zip"
+
+        with zipfile.ZipFile(backup_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for p in components_dir.glob("*.yaml"):
+                zf.write(p, arcname=p.name)
+
+        console.print(Panel(f"[green]✅ Backup criado:[/green] {backup_path}", border_style="green"))
+    except Exception as e:
+        console.print(f"[red]❌ Falha ao criar backup: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def restore(
+    file: str = typer.Argument(..., help="Arquivo .zip de backup para restaurar"),
+    confirm_overwrite: bool = typer.Option(
+        False, "--yes", "-y", help="Confirma sobrescrita dos arquivos"
+    )
+):
+    """
+    🔄 Restaura arquivos de componentes a partir de um backup (.zip).
+    """
+    try:
+        backup_zip = Path(file)
+        components_dir = Path("components")
+        if not backup_zip.exists():
+            console.print("[red]❌ Arquivo de backup não encontrado[/red]")
+            raise typer.Exit(1)
+        if not confirm_overwrite and not Confirm.ask("Sobrescrever arquivos existentes em 'components'?"):
+            raise typer.Exit(0)
+
+        with zipfile.ZipFile(backup_zip, 'r') as zf:
+            zf.extractall(components_dir)
+
+        console.print(Panel("[green]✅ Restauração concluída[/green]", border_style="green"))
+    except Exception as e:
+        console.print(f"[red]❌ Falha ao restaurar backup: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def update(
+    hashes_only: bool = typer.Option(True, "--hashes-only/--no-hashes-only", help="Atualiza apenas hashes SHA256"),
+    max_size_mb: int = typer.Option(700, "--max-size-mb", help="Tamanho máximo de download por arquivo (MB)")
+):
+    """
+    ⬆️ Atualiza definições do sistema (ex.: hashes de componentes).
+    """
+    try:
+        if hashes_only:
+            # Executa HashUpdater programaticamente
+            from scripts.hash_updater import HashUpdater
+            cfgm = get_config_manager()
+            updater = HashUpdater(cfgm)
+            init_res = updater.initialize()
+            if not init_res.success:
+                raise RuntimeError("Falha ao inicializar HashUpdater")
+            result = updater.process_all_files(Path("components"), dry_run=False, max_size_mb=max_size_mb)
+            updater.cleanup()
+            if not result.success:
+                console.print(f"[yellow]⚠️ Atualização concluída com erros[/yellow]\n{result.message}")
+            else:
+                console.print(f"[green]✅ {result.message}[/green]")
+        else:
+            console.print("[yellow]⚠️ Modo de atualização avançada ainda não implementado[/yellow]")
+    except Exception as e:
+        console.print(f"[red]❌ Falha na atualização: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def uninstall(
+    component: str = typer.Argument(..., help="Nome do componente a desinstalar"),
+    assume_yes: bool = typer.Option(False, "--yes", "-y", help="Não perguntar confirmação")
+):
+    """
+    🗑️ Desinstala um componente quando suportado (pip/winget/choco).
+    """
+    try:
+        if not assume_yes and not Confirm.ask(f"Remover '{component}' do sistema?"):
+            raise typer.Exit(0)
+
+        # Estratégias: pip, winget, choco
+        strategies = [
+            (["python", "-m", "pip", "uninstall", "-y", component], "pip"),
+            (["winget", "uninstall", "--id", component, "--silent"], "winget"),
+            (["choco", "uninstall", component, "-y"], "chocolatey"),
+        ]
+        any_ok = False
+        for cmd, name in strategies:
+            try:
+                proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+                if proc.returncode == 0:
+                    console.print(f"[green]✅ Desinstalação via {name} concluída[/green]")
+                    any_ok = True
+                    break
+            except FileNotFoundError:
+                continue
+            except Exception as e:
+                console.print(f"[dim]Aviso: tentativa via {name} falhou: {e}[/dim]")
+                continue
+
+        if not any_ok:
+            console.print("[yellow]⚠️ Desinstalação automática não suportada para este componente[/yellow]")
+            raise typer.Exit(2)
+    except Exception as e:
+        console.print(f"[red]❌ Falha ao desinstalar: {e}[/red]")
         raise typer.Exit(1)
 
 
