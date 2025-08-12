@@ -21,7 +21,7 @@ Make:
   environment_variables:
     PATH: F:\Projetos\env_dev\tools\make\bin
   extract_path: F:\Projetos\env_dev\tools\make
-  hash: HASH_PENDENTE_VERIFICACAO
+  hash: ca23bc1d9370102878d2a79a31ae70288a1cfa51928667653ffbdc28090f4123
   hash_algorithm: sha256
   install_method: archive
   verify_actions:

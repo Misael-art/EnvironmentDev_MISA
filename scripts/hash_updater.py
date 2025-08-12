@@ -259,6 +259,29 @@ class HashUpdater(SystemComponentBase):
                 url, stream=True, timeout=getattr(self._config, 'download_timeout', 60)
             )
             response.raise_for_status()
+
+            # Validate content-type to avoid hashing páginas HTML indevidas
+            ctype = (response.headers.get('content-type') or '').lower()
+            # Tipos binários comuns aceitos
+            allowed_types = [
+                'application/octet-stream',
+                'application/x-msdownload',
+                'application/zip',
+                'application/x-zip-compressed',
+                'application/x-7z-compressed',
+                'application/vnd.microsoft.portable-executable',
+                'application/x-msi',
+                'application/x-wheel+zip',
+            ]
+            # Heurística: se for texto/html/markdown/xml/json e URL não aponta explicitamente para artefato,
+            # rejeitar para não gravar hash incorreto (RF005)
+            textual_types = ['text/', 'application/json', 'application/xml', 'text/html', 'text/plain']
+            url_lc = url.lower()
+            looks_like_artifact = any(url_lc.endswith(ext) for ext in (
+                '.exe', '.msi', '.zip', '.7z', '.whl'
+            ))
+            if any(ctype.startswith(t) for t in textual_types) and not looks_like_artifact:
+                return None, f"Non-binary content-type '{ctype}' for URL (likely HTML page): {url}"
             
             content = b''
             downloaded_size = 0

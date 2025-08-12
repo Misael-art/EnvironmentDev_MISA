@@ -24,7 +24,7 @@ LM Studio:
   category: AI Tools
   description: Interface para executar modelos de linguagem localmente
   download_url: https://github.com/lmstudio-ai/lms/releases/latest/download/LM_Studio_Setup_x64.exe
-  hash: HASH_NEEDS_UPDATE
+  hash: 55b3fddb6e22dae11d44667244fcd019f7bbc69c2ba43d48609aa3614c1f0b99
   hash_algorithm: sha256
   install_args: /S
   install_method: exe
