@@ -221,6 +221,20 @@ class HashUpdater(SystemComponentBase):
         """
         try:
             self._logger.info(f"Downloading: {url}")
+            # Local file support (file://)
+            if url.lower().startswith("file://"):
+                try:
+                    local_path = url[7:]
+                    path = Path(local_path)
+                    if not path.exists() or not path.is_file():
+                        return None, f"Local file not found: {local_path}"
+                    if path.stat().st_size > max_size_mb * 1024 * 1024:
+                        return None, f"File too large: {path.stat().st_size/(1024*1024):.1f}MB > {max_size_mb}MB"
+                    content = path.read_bytes()
+                    self._logger.info(f"Loaded local file {local_path} ({len(content)} bytes)")
+                    return content, None
+                except Exception as e:
+                    return None, f"Error reading local file: {e}"
             
             # Head request to check file size (best-effort). If it fails, we proceed with guarded GET.
             head_response = None
@@ -408,10 +422,30 @@ class HashUpdater(SystemComponentBase):
                 # Download file
                 content, download_error = self.download_file(download_url, max_size_mb=effective_limit)
                 if download_error:
-                    error_msg = f"Failed to download {component_name}: {download_error}"
-                    self._logger.error(error_msg)
-                    errors.append(error_msg)
-                    continue
+                    # Try alternative URLs if available
+                    alt_urls = []
+                    try:
+                        comp_data = data.get(component_name, {})
+                        alt_urls = comp_data.get('alternative_urls', []) or []
+                    except Exception:
+                        alt_urls = []
+
+                    alt_success = False
+                    for alt in alt_urls:
+                        self._logger.info(f"Trying alternative URL for {component_name}: {alt}")
+                        content, alt_err = self.download_file(alt, max_size_mb=effective_limit)
+                        if not alt_err and content:
+                            download_error = None
+                            alt_success = True
+                            break
+                        else:
+                            self._logger.warning(f"Alternative URL failed for {component_name}: {alt_err}")
+
+                    if download_error and not alt_success:
+                        error_msg = f"Failed to download {component_name}: {download_error}"
+                        self._logger.error(error_msg)
+                        errors.append(error_msg)
+                        continue
                 
                 # Calculate hash
                 try:
