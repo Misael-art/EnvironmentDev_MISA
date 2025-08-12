@@ -258,8 +258,17 @@ class UnifiedDetectionEngine(
             generic_cli_map: Dict[str, Dict[str, Any]] = {
                 "cmake": {
                     "commands": [["cmake", "--version"], ["where", "cmake"]],
-                    "synonyms": ["cmake"],
-                    "fallback_names": ["cmake-gui.exe"],
+                "synonyms": ["cmake"],
+                "fallback_names": ["cmake-gui.exe"],
+                # Instalações típicas no Windows
+                "known_paths": [
+                    r"C:\\Program Files\\CMake\\bin\\cmake.exe",
+                    r"C:\\Program Files (x86)\\CMake\\bin\\cmake.exe",
+                ],
+                "known_globs": [
+                    r"C:\\Program Files\\CMake\\bin\\cmake.exe",
+                    r"C:\\Program Files (x86)\\CMake\\bin\\cmake.exe",
+                ],
                 },
                 "clang": {
                     "commands": [
@@ -277,21 +286,43 @@ class UnifiedDetectionEngine(
                     "commands": [["gcc", "--version"], ["where", "gcc"]],
                     "synonyms": ["gcc", "mingw", "mingw64"],
                     "fallback_names": ["g++.exe", "mingw32-make.exe"],
+                "known_globs": [
+                    r"C:\\Program Files\\mingw-w64\\*\\mingw64\\bin\\gcc.exe",
+                    r"C:\\msys64\\mingw64\\bin\\gcc.exe",
+                ],
                 },
                 "docker": {
                     "commands": [["docker", "--version"], ["where", "docker"]],
-                    "synonyms": ["docker", "docker desktop"],
+                "synonyms": ["docker", "docker desktop"],
+                "known_paths": [
+                    r"C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+                ],
+                "known_globs": [
+                    r"C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
+                ],
                 },
                 "vscode": {
                     "commands": [["code", "--version"], ["where", "code"]],
                     "synonyms": ["visual studio code", "vscode", "code"],
-                    "fallback_names": ["Code.exe"],
+                "fallback_names": ["Code.exe"],
+                "known_paths": [
+                    r"C:\\Program Files\\Microsoft VS Code\\Code.exe",
+                    r"C:\\Users\\%USERNAME%\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+                ],
+                "known_globs": [
+                    r"C:\\Program Files\\Microsoft VS Code\\Code.exe",
+                    r"C:\\Users\\*\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+                ],
                 },
                 # MSVC (Visual C++): mapear como compilers presentes
                 "msvc": {
                     "commands": [["cl"], ["where", "cl.exe"]],
                     "synonyms": ["msvc", "visual c++", "visual studio c++", "cl", "compiler", "clang"],
-                    "fallback_names": ["cl.exe"],
+                "fallback_names": ["cl.exe"],
+                "known_globs": [
+                    r"C:\\Program Files\\Microsoft Visual Studio\\*\\*\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64\\cl.exe",
+                    r"C:\\Program Files (x86)\\Microsoft Visual Studio\\*\\*\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64\\cl.exe",
+                ],
                 },
                 # Retro DevKits: detectar via toolchains e variáveis comuns
                 "gba development kit (devkitarm)": {
