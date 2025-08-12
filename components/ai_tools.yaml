@@ -35,7 +35,7 @@ NVIDIA CUDA Toolkit:
   category: AI Tools
   description: Plataforma de computação paralela e API da NVIDIA
   download_url: https://developer.download.nvidia.com/compute/cuda/12.3.2/network_installers/cuda_12.3.2_windows_network.exe
-  hash: HASH_PENDENTE_VERIFICACAO
+  hash: ff1b31de591c22a6565c910343872fed5c40e7d7827f3048d653ffd02d1755f4
   hash_algorithm: sha256
   install_args: -s
   install_method: exe

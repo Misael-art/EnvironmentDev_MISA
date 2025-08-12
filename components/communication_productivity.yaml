@@ -48,7 +48,7 @@ Notion:
 Obsidian:
   category: Productivity
   description: Aplicativo de notas com links bidirecionais
-  download_url: https://github.com/obsidianmd/obsidian-releases/releases/latest/download/Obsidian%20Setup.exe
+  download_url: https://github.com/obsidianmd/obsidian-releases/releases/latest/download/Obsidian.1.5.3.exe
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
   install_args: /S
@@ -78,7 +78,7 @@ Slack:
 Trello:
   category: Productivity
   description: Ferramenta de gerenciamento de projetos com quadros Kanban
-  download_url: https://desktop.trello.com/prerelease/win/x64/Trello%20Setup.exe
+  download_url: https://desktop.trello.com/Trello.Setup.x64.exe
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
   install_args: --silent
@@ -109,7 +109,7 @@ Zoom:
   category: Communication
   description: Plataforma de videoconferência
   download_url: https://zoom.us/client/latest/ZoomInstallerFull.exe
-  hash: HASH_PENDENTE_VERIFICACAO
+  hash: f5aea110b67398a848669ae7d0b792c8342ae8a85901df483febbf846e2e95eb
   hash_algorithm: sha256
   install_args: /silent
   install_method: exe

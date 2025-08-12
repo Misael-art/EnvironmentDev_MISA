@@ -34,6 +34,11 @@ class HashUpdater(SystemComponentBase):
         "HASH_NEEDS_UPDATE",
         "HASH_PENDENTE_VERIFICACAO"
     ]
+    # Optional per-component download size overrides (in MB)
+    COMPONENT_SIZE_LIMITS: Dict[str, int] = {
+        "Docker Desktop": 1500,
+        "NVIDIA Game Ready Driver": 900,
+    }
     
     def __init__(self, config_manager: ConfigurationManager):
         """Initialize the hash updater.
@@ -217,19 +222,28 @@ class HashUpdater(SystemComponentBase):
         try:
             self._logger.info(f"Downloading: {url}")
             
-            # Head request to check file size
-            head_response = self._session.head(url, allow_redirects=True)
-            if head_response.status_code != 200:
-                return None, f"HEAD request failed: {head_response.status_code}"
+            # Head request to check file size (best-effort). If it fails, we proceed with guarded GET.
+            head_response = None
+            try:
+                head_response = self._session.head(
+                    url, allow_redirects=True, timeout=getattr(self._config, 'download_timeout', 60)
+                )
+            except Exception as e:
+                self._logger.debug(f"HEAD request exception for {url}: {e}")
             
-            content_length = head_response.headers.get('content-length')
-            if content_length:
-                size_mb = int(content_length) / (1024 * 1024)
-                if size_mb > max_size_mb:
-                    return None, f"File too large: {size_mb:.1f}MB > {max_size_mb}MB"
+            if head_response is not None and getattr(head_response, 'status_code', 0) == 200:
+                content_length = head_response.headers.get('content-length')
+                if content_length:
+                    size_mb = int(content_length) / (1024 * 1024)
+                    if size_mb > max_size_mb:
+                        return None, f"File too large: {size_mb:.1f}MB > {max_size_mb}MB"
+            else:
+                self._logger.debug(f"HEAD not usable for {url}; proceeding with guarded GET")
             
             # Download file
-            response = self._session.get(url, stream=True)
+            response = self._session.get(
+                url, stream=True, timeout=getattr(self._config, 'download_timeout', 60)
+            )
             response.raise_for_status()
             
             content = b''
@@ -332,7 +346,7 @@ class HashUpdater(SystemComponentBase):
             self._logger.error(f"Error updating hash for {component_name}: {e}")
             return False
     
-    def process_file(self, file_path: Path, dry_run: bool = False) -> OperationResult:
+    def process_file(self, file_path: Path, dry_run: bool = False, max_size_mb: int = 500) -> OperationResult:
         """Process a single YAML file to update pending hashes.
         
         Args:
@@ -385,8 +399,14 @@ class HashUpdater(SystemComponentBase):
                     updated_count += 1
                     continue
                 
+                # Determine effective size limit
+                effective_limit = self.COMPONENT_SIZE_LIMITS.get(component_name, max_size_mb)
+                if effective_limit != max_size_mb:
+                    self._logger.info(
+                        f"Using per-component size limit for {component_name}: {effective_limit}MB"
+                    )
                 # Download file
-                content, download_error = self.download_file(download_url)
+                content, download_error = self.download_file(download_url, max_size_mb=effective_limit)
                 if download_error:
                     error_msg = f"Failed to download {component_name}: {download_error}"
                     self._logger.error(error_msg)
@@ -440,7 +460,7 @@ class HashUpdater(SystemComponentBase):
                 errors=[str(e)]
             )
     
-    def process_all_files(self, components_dir: Path, dry_run: bool = False) -> OperationResult:
+    def process_all_files(self, components_dir: Path, dry_run: bool = False, max_size_mb: int = 500) -> OperationResult:
         """Process all YAML files in the components directory.
         
         Args:
@@ -477,12 +497,13 @@ class HashUpdater(SystemComponentBase):
             successful_files = 0
             
             for file_path in yaml_files:
-                result = self.process_file(file_path, dry_run)
+                result = self.process_file(file_path, dry_run, max_size_mb=max_size_mb)
                 
                 if result.success:
                     successful_files += 1
                 else:
-                    all_errors.append(f"{file_path}: {result.error}")
+                    first_error = (result.errors[0] if hasattr(result, 'errors') and result.errors else 'unknown error')
+                    all_errors.append(f"{file_path}: {first_error}")
             
             # Generate summary
             summary_message = (
@@ -570,6 +591,12 @@ def main():
         type=Path,
         help="Path to configuration file"
     )
+    parser.add_argument(
+        "--max-size-mb",
+        type=int,
+        default=500,
+        help="Maximum download size per file in MB (default: 500)"
+    )
     
     args = parser.parse_args()
     
@@ -587,11 +614,11 @@ def main():
         # Initialize component
         init_result = hash_updater.initialize()
         if not init_result.success:
-            logger.error(f"Failed to initialize hash updater: {init_result.error}")
+            logger.error(f"Failed to initialize hash updater: {init_result.errors[0] if init_result.errors else 'unknown error'}")
             return 1
         
         # Process files
-        result = hash_updater.process_all_files(args.components_dir, args.dry_run)
+        result = hash_updater.process_all_files(args.components_dir, args.dry_run, max_size_mb=args.max_size_mb)
         
         # Print results
         print(f"\n{result.message}")
@@ -606,10 +633,9 @@ def main():
         # Cleanup
         cleanup_result = hash_updater.cleanup()
         if not cleanup_result.success:
-            logger.warning(f"Cleanup warning: {cleanup_result.error}")
+            logger.warning(f"Cleanup warning: {cleanup_result.errors[0] if cleanup_result.errors else 'unknown error'}")
         
         return 0 if result.success else 1
-        
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         return 1

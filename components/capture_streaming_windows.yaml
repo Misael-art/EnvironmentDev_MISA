@@ -1,52 +1,43 @@
-# Ferramentas de Captura e Streaming (Windows)
-
-OBS Studio:
-  category: Capture & Streaming (Windows)
-  description: Software gratuito e de código aberto para gravação e streaming
-  # Link para versão mais recente (instalador)
-  download_url: https://cdn-fastly.obsproject.com/downloads/OBS-Studio-30.1.2-Full-Installer-x64.exe
-  install_method: exe
-  install_args: /S
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'C:\Program Files\obs-studio\bin\64bit\obs64.exe'
-
-NVIDIA GeForce Experience (inclui ShadowPlay):
-  category: Capture & Streaming (Windows)
-  description: Software da NVIDIA para otimização de jogos, drivers e captura (ShadowPlay)
-  # Link da página de download
-  download_url: https://www.nvidia.com/pt-br/geforce/geforce-experience/download/ # Requer download manual ou link direto
-  install_method: exe
-  # Argumentos podem variar, -s ou -silent são comuns
-  install_args: -s # Suposição
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    # Verifica um componente chave do overlay/captura
-    - type: file_exists
-      path: 'C:\Program Files\NVIDIA Corporation\NVIDIA GeForce Experience\NVIDIA Share.exe'
-
 AMD Adrenalin Software (inclui ReLive):
   category: Capture & Streaming (Windows)
   description: Software da AMD para drivers gráficos, otimizações e captura (ReLive)
-  # Instalação requer download manual do site da AMD específico para a GPU do usuário
   install_method: none
-  post_install_message: "Acesse https://www.amd.com/pt/support para baixar e instalar o AMD Adrenalin Software manualmente, selecionando o driver correto para sua placa de vídeo."
+  post_install_message: Acesse https://www.amd.com/pt/support para baixar e instalar
+    o AMD Adrenalin Software manualmente, selecionando o driver correto para sua placa
+    de vídeo.
   verify_actions:
-    # Verifica um serviço relacionado ao ReLive/Overlay
-    - type: file_exists
-      path: 'C:\Program Files\AMD\CNext\CNext\AMDRSServ.exe' # Caminho pode variar
-
+  - path: C:\Program Files\AMD\CNext\CNext\AMDRSServ.exe
+    type: file_exists
+NVIDIA GeForce Experience (inclui ShadowPlay):
+  category: Capture & Streaming (Windows)
+  description: Software da NVIDIA para otimização de jogos, drivers e captura (ShadowPlay)
+  download_url: https://www.nvidia.com/pt-br/geforce/geforce-experience/download/
+  hash: 1a75aa6a366fa0fa39be88f3580af8b777dc575602de2203a6032254565caeda
+  hash_algorithm: sha256
+  install_args: -s
+  install_method: exe
+  verify_actions:
+  - path: C:\Program Files\NVIDIA Corporation\NVIDIA GeForce Experience\NVIDIA Share.exe
+    type: file_exists
+OBS Studio:
+  category: Capture & Streaming (Windows)
+  description: Software gratuito e de código aberto para gravação e streaming
+  download_url: https://cdn-fastly.obsproject.com/downloads/OBS-Studio-30.1.2-Full-Installer-x64.exe
+  hash: 0626384e8aa11211e77f11cc068cfedd0af043ebc71304ad7f8092173632121d
+  hash_algorithm: sha256
+  install_args: /S
+  install_method: exe
+  verify_actions:
+  - path: C:\Program Files\obs-studio\bin\64bit\obs64.exe
+    type: file_exists
 ShareX:
   category: Capture & Streaming (Windows)
   description: Ferramenta avançada para captura de tela, gravação e compartilhamento
   download_url: https://github.com/ShareX/ShareX/releases/download/v16.0.1/ShareX-16.0.1-setup.exe
-  install_method: exe
-  install_args: /SILENT /NORESTART
-  hash: HASH_PENDENTE_VERIFICACAO
+  hash: d85105ef806f15ad367d3be1f7aa7400e285c26e078fdf958618de35cb78e067
   hash_algorithm: sha256
+  install_args: /SILENT /NORESTART
+  install_method: exe
   verify_actions:
-    - type: file_exists
-      path: 'C:\Program Files\ShareX\ShareX.exe'
+  - path: C:\Program Files\ShareX\ShareX.exe
+    type: file_exists

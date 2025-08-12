@@ -1,23 +1,14 @@
-# Utilitários de Sistema para Environment Dev Script
-# Este arquivo contém componentes relacionados a utilitários do sistema
-
-# Definição movida para common_utils.yaml
-
-# Definição movida para system_optimization_windows.yaml
-
-# Definição movida para common_utils.yaml
-
 Vulkan SDK:
   category: Runtimes
   description: SDK para desenvolvimento com a API gráfica Vulkan
   download_url: https://sdk.lunarg.com/sdk/download/1.3.261.1/windows/VulkanSDK-1.3.261.1-Installer.exe
-  install_method: exe
-  install_args: /S
-  hash: HASH_PENDENTE_VERIFICACAO
+  extract_path: C:\VulkanSDK\1.3.261.1
+  hash: 646857f7ce76b2eaa2064d9c2c7eb22970fddd5328f09523a88c32b785686a20
   hash_algorithm: sha256
-  extract_path: 'C:\VulkanSDK\1.3.261.1'
+  install_args: /S
+  install_method: exe
   verify_actions:
-    - type: env_var_exists
-      name: VULKAN_SDK
-    - type: directory_exists
-      path: '${env:VULKAN_SDK}\Bin' 
+  - name: VULKAN_SDK
+    type: env_var_exists
+  - path: ${env:VULKAN_SDK}\Bin
+    type: directory_exists

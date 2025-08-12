@@ -21,7 +21,7 @@ WinDirStat:
   - https://github.com/shanselman/windirstat/releases/latest
   category: Backup & Sync (Windows)
   description: Analisador e visualizador de uso de disco
-  download_url: https://downloads.sourceforge.net/project/windirstat/windirstat/1.1.2/setup/windirstat1_1_2_setup.exe
+  download_url: https://downloads.sourceforge.net/project/windirstat/windirstat-1.1.2/1.1.2-Setup/windirstat1_1_2_setup.exe
   hash: HASH_NEEDS_UPDATE
   hash_algorithm: sha256
   install_args: /S

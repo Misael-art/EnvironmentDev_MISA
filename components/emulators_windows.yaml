@@ -1,3 +1,14 @@
+BizHawk:
+  category: Emuladores (Windows)
+  description: Emulador multi-sistema focado em TAS (Tool-Assisted Speedruns)
+  download_url: https://github.com/TASEmulators/BizHawk/releases
+  install_method: none
+  post_install_message: Acesse https://github.com/TASEmulators/BizHawk/releases para
+    baixar o ZIP do BizHawk e extraia-o manualmente. Certifique-se de ter os pré-requisitos
+    (.NET Desktop Runtime, VC++ Runtimes) instalados.
+  verify_actions:
+  - path: ${env:ProgramFiles}\BizHawk\EmuHawk.exe
+    type: file_exists
 Citra (Windows):
   category: Emuladores (Windows)
   dependencies:
@@ -12,19 +23,112 @@ Citra (Windows):
   verify_actions:
   - path: ${env:ProgramFiles}\Citra\citra-qt.exe
     type: file_exists
-
 Dolphin Emulator (Windows):
   category: Emuladores (Windows)
   description: Emulador de GameCube e Wii para Windows
   download_url: https://dl-mirror.dolphin-emu.org/5.0/dolphin-x64-5.0.exe
-  hash: HASH_PENDENTE_VERIFICACAO
+  hash: e1b3ae8fc890c6588e5656f77ef2747ae7ddfc90b6530b240c0c5b9d0ab3ce8c
   hash_algorithm: sha256
   install_args: /S
   install_method: exe
   verify_actions:
   - path: C:\Program Files\Dolphin\Dolphin.exe
     type: file_exists
+Eden Emulator:
+  alternative_urls:
+  - https://eden-emu.dev/download
+  category: Emuladores (Windows)
+  description: Emulador moderno e multiplataforma para Sega Dreamcast
+  download_url: https://eden-emu.dev/download
+  install_method: manual
+  notes: 'Eden é um emulador moderno para Sega Dreamcast com foco em precisão e performance.
 
+    Versão atual: v0.0.3-rc1 (137 MB)
+
+    Requisitos: Windows 10/11 (64-bit)
+
+    '
+  post_install_message: 'Acesse https://eden-emu.dev/download para baixar a versão
+    mais recente do Eden.
+
+    Suporte para Windows 10/11 (64-bit).
+
+    Consulte os guias de instalação no site oficial.
+
+    '
+  verify_actions:
+  - path: ${env:ProgramFiles}\Eden\Eden.exe
+    type: file_exists
+  - path: ${env:LOCALAPPDATA}\Eden\Eden.exe
+    type: file_exists
+Flycast:
+  alternative_urls:
+  - https://github.com/flyinghead/flycast.git
+  - https://github.com/flyinghead/flycast/releases
+  build_info:
+    automated_tests: Disponível
+    builds_page: https://github.com/flyinghead/flycast/actions
+    source: https://github.com/flyinghead/flycast.git
+  category: Emuladores (Windows)
+  dependencies:
+  - 7-Zip
+  description: Emulador multiplataforma para Sega Dreamcast, Naomi, Naomi 2 e Atomiswave
+  download_url: https://github.com/flyinghead/flycast/releases/latest
+  extract_path: ${env:ProgramFiles}\Flycast
+  hash: eee885f2986282c71c9384753fde7e99b64fa354ef9649298a3d3edabc7ac892
+  hash_algorithm: sha256
+  install_method: archive
+  notes: 'Flycast é um emulador multiplataforma derivado do reicast.
+
+    Suporta: Sega Dreamcast, Naomi, Naomi 2, e Atomiswave.
+
+    Projeto ativo com builds automatizadas disponíveis.
+
+    '
+  post_install_message: 'Flycast instalado com sucesso!
+
+    Documentação e configuração disponível em: TheArcadeStriker''s flycast wiki
+
+    Discord: Junte-se ao servidor Discord oficial para suporte
+
+    '
+  supported_systems:
+  - Sega Dreamcast
+  - Naomi
+  - Naomi 2
+  - Atomiswave
+  verify_actions:
+  - path: ${env:ProgramFiles}\Flycast\flycast.exe
+    type: file_exists
+  - path: ${env:ProgramFiles}\Flycast\flycast-win64.exe
+    type: file_exists
+Mednafen:
+  category: Emuladores (Windows)
+  dependencies:
+  - 7-Zip
+  description: Emulador multi-sistema via linha de comando (NES, GB/A, PS1, PCE, etc.)
+  download_url: https://mednafen.github.io/releases/files/mednafen-1.29.0-win64.zip
+  extract_path: ${env:ProgramFiles}\Mednafen
+  hash: 26c6676354d44e7d2c31b002f0abb097940e0846e449ed080fb79e6b64db0be2
+  hash_algorithm: sha256
+  install_method: archive
+  verify_actions:
+  - path: ${env:ProgramFiles}\Mednafen\mednafen.exe
+    type: file_exists
+Mesen:
+  category: Emuladores (Windows)
+  dependencies:
+  - 7-Zip
+  description: Emulador de NES/Famicom, SNES/Super Famicom, Game Boy, PC Engine de
+    alta precisão
+  download_url: https://github.com/SourMesen/Mesen2/releases/latest/download/Mesen-Windows.zip
+  extract_path: ${env:ProgramFiles}\Mesen
+  hash: HASH_NEEDS_UPDATE
+  hash_algorithm: sha256
+  install_method: archive
+  verify_actions:
+  - path: ${env:ProgramFiles}\Mesen\Mesen.exe
+    type: file_exists
 PCSX2 (Windows):
   category: Emuladores (Windows)
   dependencies:
@@ -38,7 +142,6 @@ PCSX2 (Windows):
   verify_actions:
   - path: ${env:ProgramFiles}\PCSX2\pcsx2.exe
     type: file_exists
-
 RPCS3 (Windows):
   category: Emuladores (Windows)
   dependencies:
@@ -52,7 +155,6 @@ RPCS3 (Windows):
   verify_actions:
   - path: ${env:ProgramFiles}\RPCS3\rpcs3.exe
     type: file_exists
-
 RetroArch (Windows):
   category: Emuladores (Windows)
   dependencies:
@@ -60,13 +162,25 @@ RetroArch (Windows):
   description: Frontend universal para emuladores (versão Windows)
   download_url: https://buildbot.libretro.com/stable/1.19.1/windows/x86_64/RetroArch.7z
   extract_path: ${env:ProgramFiles}\RetroArch
-  hash: HASH_NEEDS_UPDATE
+  hash: 49b13c10a8962c82b8dbffb6524f49d824a264c58e6d6ec4f27934d110168600
   hash_algorithm: sha256
   install_method: archive
   verify_actions:
   - path: ${env:ProgramFiles}\RetroArch\retroarch.exe
     type: file_exists
-
+VBA-M (VisualBoyAdvance-M):
+  category: Emuladores (Windows)
+  dependencies:
+  - 7-Zip
+  description: Emulador de Game Boy / Color / Advance
+  download_url: https://github.com/visualboyadvance-m/visualboyadvance-m/releases/latest/download/visualboyadvance-m-Win-x64.zip
+  extract_path: ${env:ProgramFiles}\VBA-M
+  hash: HASH_NEEDS_UPDATE
+  hash_algorithm: sha256
+  install_method: archive
+  verify_actions:
+  - path: ${env:ProgramFiles}\VBA-M\visualboyadvance-m.exe
+    type: file_exists
 Yuzu (Windows):
   category: Emuladores (Windows)
   dependencies:
@@ -81,59 +195,6 @@ Yuzu (Windows):
   verify_actions:
   - path: ${env:ProgramFiles}\Yuzu\yuzu.exe
     type: file_exists
-
-BizHawk:
-  category: Emuladores (Windows)
-  description: Emulador multi-sistema focado em TAS (Tool-Assisted Speedruns)
-  download_url: https://github.com/TASEmulators/BizHawk/releases
-  install_method: none
-  post_install_message: Acesse https://github.com/TASEmulators/BizHawk/releases para baixar o ZIP do BizHawk e extraia-o manualmente. Certifique-se de ter os pré-requisitos (.NET Desktop Runtime, VC++ Runtimes) instalados.
-  verify_actions:
-  - path: ${env:ProgramFiles}\BizHawk\EmuHawk.exe
-    type: file_exists
-
-Mednafen:
-  category: Emuladores (Windows)
-  dependencies:
-  - 7-Zip
-  description: Emulador multi-sistema via linha de comando (NES, GB/A, PS1, PCE, etc.)
-  download_url: https://mednafen.github.io/releases/files/mednafen-1.29.0-win64.zip
-  extract_path: ${env:ProgramFiles}\Mednafen
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  install_method: archive
-  verify_actions:
-  - path: ${env:ProgramFiles}\Mednafen\mednafen.exe
-    type: file_exists
-
-Mesen:
-  category: Emuladores (Windows)
-  dependencies:
-  - 7-Zip
-  description: Emulador de NES/Famicom, SNES/Super Famicom, Game Boy, PC Engine de alta precisão
-  download_url: https://github.com/SourMesen/Mesen2/releases/latest/download/Mesen-Windows.zip
-  extract_path: ${env:ProgramFiles}\Mesen
-  hash: HASH_NEEDS_UPDATE
-  hash_algorithm: sha256
-  install_method: archive
-  verify_actions:
-  - path: ${env:ProgramFiles}\Mesen\Mesen.exe
-    type: file_exists
-
-VBA-M (VisualBoyAdvance-M):
-  category: Emuladores (Windows)
-  dependencies:
-  - 7-Zip
-  description: Emulador de Game Boy / Color / Advance
-  download_url: https://github.com/visualboyadvance-m/visualboyadvance-m/releases/latest/download/visualboyadvance-m-Win-x64.zip
-  extract_path: ${env:ProgramFiles}\VBA-M
-  hash: HASH_NEEDS_UPDATE
-  hash_algorithm: sha256
-  install_method: archive
-  verify_actions:
-  - path: ${env:ProgramFiles}\VBA-M\visualboyadvance-m.exe
-    type: file_exists
-
 mGBA:
   category: Emuladores (Windows)
   dependencies:
@@ -147,75 +208,3 @@ mGBA:
   verify_actions:
   - path: ${env:ProgramFiles}\mGBA\mGBA.exe
     type: file_exists
-Mednafen:
-  category: Emuladores (Windows)
-  dependencies:
-  - 7-Zip
-  description: Emulador multi-sistema via linha de comando (NES, GB/A, PS1, PCE, etc.)
-  download_url: https://mednafen.github.io/releases/files/mednafen-1.29.0-win64.zip
-  extract_path: ${env:ProgramFiles}\Mednafen
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  install_method: archive
-  verify_actions:
-  - path: ${env:ProgramFiles}\Mednafen\mednafen.exe
-    type: file_exists
-
-# LaunchBox REMOVIDO conforme solicitado
-
-Eden Emulator:
-  category: Emuladores (Windows)
-  description: Emulador moderno e multiplataforma para Sega Dreamcast
-  download_url: https://eden-emu.dev/download
-  install_method: manual
-  alternative_urls:
-  - https://eden-emu.dev/download
-  notes: |
-    Eden é um emulador moderno para Sega Dreamcast com foco em precisão e performance.
-    Versão atual: v0.0.3-rc1 (137 MB)
-    Requisitos: Windows 10/11 (64-bit)
-  verify_actions:
-  - path: ${env:ProgramFiles}\Eden\Eden.exe
-    type: file_exists
-  - path: ${env:LOCALAPPDATA}\Eden\Eden.exe
-    type: file_exists
-  post_install_message: |
-    Acesse https://eden-emu.dev/download para baixar a versão mais recente do Eden.
-    Suporte para Windows 10/11 (64-bit).
-    Consulte os guias de instalação no site oficial.
-
-Flycast:
-  category: Emuladores (Windows)
-  description: Emulador multiplataforma para Sega Dreamcast, Naomi, Naomi 2 e Atomiswave
-  download_url: https://github.com/flyinghead/flycast/releases/latest
-  install_method: archive
-  dependencies:
-  - 7-Zip
-  hash: HASH_NEEDS_UPDATE
-  hash_algorithm: sha256
-  extract_path: ${env:ProgramFiles}\Flycast
-  alternative_urls:
-  - https://github.com/flyinghead/flycast.git
-  - https://github.com/flyinghead/flycast/releases
-  notes: |
-    Flycast é um emulador multiplataforma derivado do reicast.
-    Suporta: Sega Dreamcast, Naomi, Naomi 2, e Atomiswave.
-    Projeto ativo com builds automatizadas disponíveis.
-  verify_actions:
-  - path: ${env:ProgramFiles}\Flycast\flycast.exe
-    type: file_exists
-  - path: ${env:ProgramFiles}\Flycast\flycast-win64.exe
-    type: file_exists
-  post_install_message: |
-    Flycast instalado com sucesso!
-    Documentação e configuração disponível em: TheArcadeStriker's flycast wiki
-    Discord: Junte-se ao servidor Discord oficial para suporte
-  supported_systems:
-  - Sega Dreamcast
-  - Naomi
-  - Naomi 2
-  - Atomiswave
-  build_info:
-    source: https://github.com/flyinghead/flycast.git
-    builds_page: https://github.com/flyinghead/flycast/actions
-    automated_tests: Disponível

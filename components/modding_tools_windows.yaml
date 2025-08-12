@@ -3,7 +3,7 @@ CKAN (Comprehensive Kerbal Archive Network):
   description: Gerenciador de mods para Kerbal Space Program
   download_dir: ${env:USERPROFILE}\Downloads\CKAN
   download_url: https://github.com/KSP-CKAN/CKAN/releases/latest/download/ckan.exe
-  hash: HASH_PENDENTE_VERIFICACAO
+  hash: 4f0f2cf3a16d073ffddaeab68a61599b89fcf0d082a5e3d3a7276802862c1375
   hash_algorithm: sha256
   install_method: download
   verify_actions:
@@ -13,7 +13,7 @@ Mod Organizer 2 (MO2):
   category: Modding Tools (Windows)
   description: Gerenciador de mods avançado para jogos Bethesda e outros
   download_url: https://github.com/ModOrganizer2/modorganizer/releases/latest
-  hash: HASH_PENDENTE_VERIFICACAO
+  hash: 6931f7331206242e1a47010c39dae8837baf46d078059b24e805c39d8e8001e1
   hash_algorithm: sha256
   install_args: /S
   install_method: exe

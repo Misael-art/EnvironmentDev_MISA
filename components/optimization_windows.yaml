@@ -25,7 +25,7 @@ Process Lasso:
   category: Optimization (Windows)
   description: Otimizador de prioridade de processos e automação de sistema
   download_url: https://bitsum.com/files/processlassosetup64.exe
-  hash: HASH_PENDENTE_VERIFICACAO
+  hash: 1be5708ec57bf1ffff5145810851f7b7107117a51d198f59ecf46d0ffb96d387
   hash_algorithm: sha256
   install_args: /S
   install_method: exe

@@ -5,7 +5,7 @@ Grub2Win:
   category: Boot Managers
   description: Gerenciador de boot GRUB2 para Windows
   dependencies: []
-  download_url: https://downloads.sourceforge.net/project/grub2win/Grub2Win_Release/grub2win-2.3.5.5.exe
+  download_url: https://downloads.sourceforge.net/project/grub2win/Grub2Win_Release/grub2win-2.3.5.7.exe
   install_method: exe
   install_args: /VERYSILENT /SUPPRESSMSGBOXES
   hash: HASH_PENDENTE_VERIFICACAO
