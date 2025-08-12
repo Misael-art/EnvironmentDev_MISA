@@ -185,25 +185,27 @@ class TestComponentModel:
             )
         assert "Invalid SHA256 hash format" in str(exc_info.value)
     
-    def test_valid_pending_hash(self):
-        """Test component with pending hash markers."""
-        component = ComponentModel(
-            category=ComponentCategory.AI_TOOLS,
-            description="Test tool",
-            download_url="https://example.com/download.exe",
-            install_method=InstallMethod.EXE,
-            hash="HASH_NEEDS_UPDATE"
-        )
-        assert component.hash == "HASH_NEEDS_UPDATE"
-        
-        component2 = ComponentModel(
-            category=ComponentCategory.AI_TOOLS,
-            description="Test tool",
-            download_url="https://example.com/download.exe",
-            install_method=InstallMethod.EXE,
-            hash="HASH_PENDENTE_VERIFICACAO"
-        )
-        assert component2.hash == "HASH_PENDENTE_VERIFICACAO"
+    def test_pending_hash_placeholders_rejected_for_download_methods(self):
+        """RF005: placeholders não são permitidos para métodos com download."""
+        with pytest.raises(ValidationError) as exc_info1:
+            ComponentModel(
+                category=ComponentCategory.AI_TOOLS,
+                description="Test tool",
+                download_url="https://example.com/download.exe",
+                install_method=InstallMethod.EXE,
+                hash="HASH_NEEDS_UPDATE"
+            )
+        assert "hash is required and cannot be a placeholder" in str(exc_info1.value)
+
+        with pytest.raises(ValidationError) as exc_info2:
+            ComponentModel(
+                category=ComponentCategory.AI_TOOLS,
+                description="Test tool",
+                download_url="https://example.com/download.exe",
+                install_method=InstallMethod.EXE,
+                hash="HASH_PENDENTE_VERIFICACAO"
+            )
+        assert "hash is required and cannot be a placeholder" in str(exc_info2.value)
     
     def test_invalid_version_format(self):
         """Test component with invalid version format."""
@@ -237,6 +239,7 @@ class TestComponentModel:
                 description="Test tool",
                 download_url="https://example.com/download.exe",
                 install_method=InstallMethod.EXE,
+                hash="a" * 64,
                 version=version
             )
             assert component.version == version
@@ -251,26 +254,58 @@ class TestComponentModel:
             )
         assert "download_url is required for InstallMethod.EXE installation method" in str(exc_info.value)
     
-    def test_install_requirements_validation_pip_without_args(self):
-        """Test PIP install method without install args."""
-        with pytest.raises(ValidationError) as exc_info:
+    def test_install_requirements_validation_pip_requires_args_pypi_name_version_and_hash(self):
+        """PIP requer install_args, pypi_name, version e hash (RF005)."""
+        # Sem nada
+        with pytest.raises(ValidationError):
             ComponentModel(
                 category=ComponentCategory.AI_TOOLS,
                 description="Test tool",
                 install_method=InstallMethod.PIP
             )
-        assert "install_args is required for InstallMethod.PIP installation method" in str(exc_info.value)
+        # Com install_args mas sem pypi_name/version/hash
+        with pytest.raises(ValidationError):
+            ComponentModel(
+                category=ComponentCategory.AI_TOOLS,
+                description="Test tool",
+                install_method=InstallMethod.PIP,
+                install_args="tensorflow"
+            )
+        # Com args e pypi_name mas sem version/hash
+        with pytest.raises(ValidationError):
+            ComponentModel(
+                category=ComponentCategory.AI_TOOLS,
+                description="Test tool",
+                install_method=InstallMethod.PIP,
+                install_args="tensorflow",
+                pypi_name="tensorflow"
+            )
+        # Com args, pypi_name, version mas hash placeholder → falha
+        with pytest.raises(ValidationError):
+            ComponentModel(
+                category=ComponentCategory.AI_TOOLS,
+                description="Test tool",
+                install_method=InstallMethod.PIP,
+                install_args="tensorflow",
+                pypi_name="tensorflow",
+                version="2.16.0",
+                hash="HASH_NEEDS_UPDATE"
+            )
     
     def test_valid_pip_component(self):
-        """Test valid PIP component."""
+        """PIP válido com todos os campos exigidos e hash válido."""
         component = ComponentModel(
             category=ComponentCategory.AI_TOOLS,
             description="Test Python package",
             install_method=InstallMethod.PIP,
-            install_args="tensorflow"
+            install_args="tensorflow",
+            pypi_name="tensorflow",
+            version="2.16.0",
+            hash="a" * 64
         )
         assert component.install_method == InstallMethod.PIP
         assert component.install_args == "tensorflow"
+        assert component.pypi_name == "tensorflow"
 
 
 class TestComponentsFile:
@@ -283,13 +318,15 @@ class TestComponentsFile:
                 category=ComponentCategory.RUNTIMES,
                 description="Python runtime",
                 download_url="https://python.org/download.exe",
-                install_method=InstallMethod.EXE
+                install_method=InstallMethod.EXE,
+                hash="a" * 64
             ),
             "git": ComponentModel(
                 category=ComponentCategory.VERSION_CONTROL,
                 description="Git version control",
                 download_url="https://git-scm.com/download.exe",
-                install_method=InstallMethod.EXE
+                install_method=InstallMethod.EXE,
+                hash="b" * 64
             )
         }
         
@@ -311,7 +348,8 @@ class TestComponentsFile:
                 category=ComponentCategory.RUNTIMES,
                 description="Invalid component",
                 download_url="https://example.com/download.exe",
-                install_method=InstallMethod.EXE
+                install_method=InstallMethod.EXE,
+                hash="c" * 64
             )
         }
         
@@ -327,7 +365,8 @@ class TestComponentsFile:
                 category=ComponentCategory.RUNTIMES,
                 description="Component with long name",
                 download_url="https://example.com/download.exe",
-                install_method=InstallMethod.EXE
+                install_method=InstallMethod.EXE,
+                hash="d" * 64
             )
         }
         
@@ -343,6 +382,7 @@ class TestComponentsFile:
                 description="App that depends on undefined component",
                 download_url="https://example.com/app.exe",
                 install_method=InstallMethod.EXE,
+                hash="e" * 64,
                 dependencies=["undefined_component"]
             )
         }
@@ -359,6 +399,7 @@ class TestComponentsFile:
                 description="App A",
                 download_url="https://example.com/a.exe",
                 install_method=InstallMethod.EXE,
+                hash="f" * 64,
                 dependencies=["app_b"]
             ),
             "app_b": ComponentModel(
@@ -366,6 +407,7 @@ class TestComponentsFile:
                 description="App B",
                 download_url="https://example.com/b.exe",
                 install_method=InstallMethod.EXE,
+                hash="1" * 64,
                 dependencies=["app_a"]
             )
         }
@@ -381,13 +423,17 @@ class TestComponentsFile:
                 category=ComponentCategory.RUNTIMES,
                 description="Python runtime",
                 download_url="https://python.org/download.exe",
-                install_method=InstallMethod.EXE
+                install_method=InstallMethod.EXE,
+                hash="a" * 64
             ),
             "pip_package": ComponentModel(
                 category=ComponentCategory.AI_TOOLS,
                 description="Python package",
                 install_method=InstallMethod.PIP,
                 install_args="tensorflow",
+                pypi_name="tensorflow",
+                version="2.16.0",
+                hash="b" * 64,
                 dependencies=["python"]
             )
         }
@@ -409,11 +455,13 @@ components:
     description: Python runtime
     download_url: https://python.org/download.exe
     install_method: exe
+    hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   git:
     category: Version Control
     description: Git version control
     download_url: https://git-scm.com/download.exe
     install_method: exe
+    hash: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 """
         
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -433,6 +481,7 @@ python:
   description: Python runtime
   download_url: https://python.org/download.exe
   install_method: exe
+  hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 """
         
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -470,6 +519,7 @@ components:
     description: Python runtime
     download_url: https://python.org/download.exe
     install_method: exe
+    hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 """
         
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -505,13 +555,15 @@ components:
                 category=ComponentCategory.RUNTIMES,
                 description="Base component",
                 download_url="https://example.com/base.exe",
-                install_method=InstallMethod.EXE
+                install_method=InstallMethod.EXE,
+                hash="a" * 64
             ),
             "middle": ComponentModel(
                 category=ComponentCategory.RUNTIMES,
                 description="Middle component",
                 download_url="https://example.com/middle.exe",
                 install_method=InstallMethod.EXE,
+                hash="b" * 64,
                 dependencies=["base"]
             ),
             "top": ComponentModel(
@@ -519,6 +571,7 @@ components:
                 description="Top component",
                 download_url="https://example.com/top.exe",
                 install_method=InstallMethod.EXE,
+                hash="c" * 64,
                 dependencies=["middle"]
             )
         }
@@ -536,7 +589,8 @@ components:
                 category=ComponentCategory.RUNTIMES,
                 description="Python runtime",
                 download_url="https://python.org/download.exe",
-                install_method=InstallMethod.EXE
+                install_method=InstallMethod.EXE,
+                hash="a" * 64
             )
         }
         
@@ -553,19 +607,22 @@ components:
                 category=ComponentCategory.RUNTIMES,
                 description="Python runtime",
                 download_url="https://python.org/download.exe",
-                install_method=InstallMethod.EXE
+                install_method=InstallMethod.EXE,
+                hash="a" * 64
             ),
             "git": ComponentModel(
                 category=ComponentCategory.VERSION_CONTROL,
                 description="Git version control",
                 download_url="https://git-scm.com/download.exe",
-                install_method=InstallMethod.EXE
+                install_method=InstallMethod.EXE,
+                hash="b" * 64
             ),
             "node": ComponentModel(
                 category=ComponentCategory.RUNTIMES,
                 description="Node.js runtime",
                 download_url="https://nodejs.org/download.exe",
-                install_method=InstallMethod.EXE
+                install_method=InstallMethod.EXE,
+                hash="c" * 64
             )
         }
         
@@ -591,6 +648,7 @@ components:
     description: Python runtime
     download_url: https://python.org/download.exe
     install_method: exe
+    hash: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 """)
             
             # Create invalid YAML file

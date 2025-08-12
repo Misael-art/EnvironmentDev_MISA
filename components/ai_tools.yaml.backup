@@ -20,9 +20,10 @@ Hugging Face CLI:
 LM Studio:
   alternative_urls:
   - https://lmstudio.ai/download
+  - https://github.com/lmstudio-ai/lms/releases/latest/download/LM_Studio_Setup_x64.exe
   category: AI Tools
   description: Interface para executar modelos de linguagem localmente
-  download_url: https://releases.lmstudio.ai/windows/x64/0.2.15/LM%20Studio-0.2.15-Setup.exe
+  download_url: https://github.com/lmstudio-ai/lms/releases/latest/download/LM_Studio_Setup_x64.exe
   hash: HASH_NEEDS_UPDATE
   hash_algorithm: sha256
   install_args: /S
@@ -33,7 +34,7 @@ LM Studio:
 NVIDIA CUDA Toolkit:
   category: AI Tools
   description: Plataforma de computação paralela e API da NVIDIA
-  download_url: https://developer.download.nvidia.com/compute/cuda/12.3.2/local_installers/cuda_12.3.2_546.12_windows.exe
+  download_url: https://developer.download.nvidia.com/compute/cuda/12.3.2/network_installers/cuda_12.3.2_windows_network.exe
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
   install_args: -s

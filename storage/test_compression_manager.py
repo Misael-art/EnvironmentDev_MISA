@@ -73,8 +73,8 @@ class TestCompressionManager(unittest.TestCase):
             with patch.object(self.manager, '_is_already_compressed', return_value=False):
                 with patch.object(self.manager, '_estimate_compression_ratio', 
                                 return_value=(CompressionType.GZIP, 0.3)):
-                    
-                    candidates = self.manager.identify_compression_candidates(['/test'])
+                    # Provide mock files hint for synthetic fallback
+                    candidates = self.manager.identify_compression_candidates(['/test'], criteria={'__mock_files__': ['file1.txt', 'file2.log', 'file3.jpg']})
         
         # Should find candidates for .txt and .log files, but not .jpg
         self.assertGreater(len(candidates), 0)

@@ -1,0 +1,311 @@
+Heroic Games Launcher (Flatpak):
+  category: Game Launchers (Steam Deck)
+  description: Launcher alternativo para Epic Games, GOG (via Flatpak)
+  install_method: script
+  script_actions:
+  - type: executable
+    command: flatpak
+    args:
+    - install
+    - --user
+    - --noninteractive
+    - flathub
+    - com.heroicgameslauncher.hgl
+  verify_actions:
+  - type: command_output
+    command: flatpak info com.heroicgameslauncher.hgl
+    expected_contains: 'ID: com.heroicgameslauncher.hgl'
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+Lutris (Flatpak):
+  category: Game Launchers (Steam Deck)
+  description: Gerenciador de jogos para várias fontes (via Flatpak)
+  install_method: script
+  script_actions:
+  - type: executable
+    command: flatpak
+    args:
+    - install
+    - --user
+    - --noninteractive
+    - flathub
+    - net.lutris.Lutris
+  verify_actions:
+  - type: command_output
+    command: flatpak info net.lutris.Lutris
+    expected_contains: 'ID: net.lutris.Lutris'
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+RetroArch (Flatpak):
+  category: Emulators (Steam Deck)
+  description: Frontend universal para emuladores (via Flatpak)
+  install_method: script
+  script_actions:
+  - type: executable
+    command: flatpak
+    args:
+    - install
+    - --user
+    - --noninteractive
+    - flathub
+    - org.libretro.RetroArch
+  verify_actions:
+  - type: command_output
+    command: flatpak info org.libretro.RetroArch
+    expected_contains: 'ID: org.libretro.RetroArch'
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+PCSX2 (Flatpak):
+  category: Emulators (Steam Deck)
+  description: Emulador de PlayStation 2 (via Flatpak)
+  install_method: script
+  script_actions:
+  - type: executable
+    command: flatpak
+    args:
+    - install
+    - --user
+    - --noninteractive
+    - flathub
+    - net.pcsx2.PCSX2
+  verify_actions:
+  - type: command_output
+    command: flatpak info net.pcsx2.PCSX2
+    expected_contains: 'ID: net.pcsx2.PCSX2'
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+Dolphin Emulator (Flatpak):
+  category: Emulators (Steam Deck)
+  description: Emulador de GameCube e Wii (via Flatpak)
+  install_method: script
+  script_actions:
+  - type: executable
+    command: flatpak
+    args:
+    - install
+    - --user
+    - --noninteractive
+    - flathub
+    - org.DolphinEmu.dolphin-emu
+  verify_actions:
+  - type: command_output
+    command: flatpak info org.DolphinEmu.dolphin-emu
+    expected_contains: 'ID: org.DolphinEmu.dolphin-emu'
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+Cemu (AppImage):
+  category: Emulators (Steam Deck)
+  description: Emulador de Wii U (via AppImage)
+  download_url: https://github.com/cemu-project/Cemu/releases/download/v2.0-79/Cemu-2.0-79-x86_64.AppImage
+  install_method: download
+  download_dir: ${env:HOME}/Applications
+  post_install_message: Cemu AppImage baixado para ~/Applications. Torne-o executável
+    (chmod +x) e execute.
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+  - type: file_exists
+    path: ${env:HOME}/Applications/Cemu-2.0-79-x86_64.AppImage
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+PPSSPP (Flatpak):
+  category: Emulators (Steam Deck)
+  description: Emulador de PSP (via Flatpak)
+  install_method: script
+  script_actions:
+  - type: executable
+    command: flatpak
+    args:
+    - install
+    - --user
+    - --noninteractive
+    - flathub
+    - org.ppsspp.PPSSPP
+  verify_actions:
+  - type: command_output
+    command: flatpak info org.ppsspp.PPSSPP
+    expected_contains: 'ID: org.ppsspp.PPSSPP'
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+GOverlay (Flatpak):
+  category: Optimization (Steam Deck)
+  description: Overlay para monitoramento e ajustes gráficos (via Flatpak)
+  install_method: script
+  script_actions:
+  - type: executable
+    command: flatpak
+    args:
+    - install
+    - --user
+    - --noninteractive
+    - flathub
+    - com.benjamimjacob.GOverlay
+  verify_actions:
+  - type: command_output
+    command: flatpak info com.benjamimjacob.GOverlay
+    expected_contains: 'ID: com.benjamimjacob.GOverlay'
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+MangoHud:
+  category: Optimization (Steam Deck)
+  description: HUD para monitoramento de desempenho em jogos
+  install_method: script
+  script_actions:
+  - type: executable
+    command: sudo
+    args:
+    - pacman
+    - -S
+    - --noconfirm
+    - mangohud
+  post_install_message: MangoHud instalado via pacman. Pode requerer configuração
+    adicional.
+  verify_actions:
+  - type: command_exists
+    name: mangohud
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+GameMode:
+  category: Optimization (Steam Deck)
+  description: Otimiza o sistema para performance em jogos
+  install_method: script
+  script_actions:
+  - type: executable
+    command: sudo
+    args:
+    - pacman
+    - -S
+    - --noconfirm
+    - gamemode
+  verify_actions:
+  - type: command_exists
+    name: gamemoded
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+Powertop:
+  category: Optimization (Steam Deck)
+  description: Utilitário para otimização de consumo de energia
+  install_method: script
+  script_actions:
+  - type: executable
+    command: sudo
+    args:
+    - pacman
+    - -S
+    - --noconfirm
+    - powertop
+  verify_actions:
+  - type: command_exists
+    name: powertop
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+Rclone:
+  category: Sync Tools (Steam Deck)
+  description: Ferramenta para sincronizar arquivos com serviços de nuvem
+  install_method: script
+  script_actions:
+  - type: executable
+    command: sudo
+    args:
+    - pacman
+    - -S
+    - --noconfirm
+    - rclone
+  verify_actions:
+  - type: command_exists
+    name: rclone
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+Syncthing:
+  category: Sync Tools (Steam Deck)
+  description: Sincronização de arquivos P2P descentralizada
+  install_method: script
+  script_actions:
+  - type: executable
+    command: sudo
+    args:
+    - pacman
+    - -S
+    - --noconfirm
+    - syncthing
+  verify_actions:
+  - type: command_exists
+    name: syncthing
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+Decky Loader:
+  category: Customization (Steam Deck)
+  description: Plugin loader para adicionar funcionalidades à interface do Steam Deck
+  install_method: script
+  script_actions:
+  - type: executable
+    command: /bin/bash
+    args:
+    - -c
+    - curl -L https://github.com/SteamDeckHomebrew/decky-installer/releases/latest/download/install.sh
+      | sh
+  post_install_message: Decky Loader instalado. Reinicie o Steam Deck para acessá-lo
+    no menu '...'
+  verify_actions:
+  - type: directory_exists
+    path: ${env:HOME}/homebrew/plugins
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+KDE Plasma Mobile Info:
+  category: Customization (Steam Deck)
+  description: Interface de desktop alternativa (Instalação manual complexa)
+  install_method: none
+  post_install_message: KDE Plasma Mobile é um ambiente de desktop alternativo. Sua
+    instalação no Steam Deck é um processo avançado e manual, geralmente não recomendado
+    para usuários comuns. Pesquise guias específicos se desejar prosseguir.
+  verify_actions:
+  - type: command_exists
+    name: kde-plasma-desktop
+    description: KDE Plasma só está disponível em sistemas Linux
+  supported_os:
+  - linux
+  os_filter:
+    linux: true
+ProtonDB Notes:
+  category: Information (Steam Deck)
+  description: Site da comunidade para compatibilidade de jogos Proton (Não instalável)
+  install_method: none
+  post_install_message: Acesse ProtonDB (https://www.protondb.com/) para verificar
+    a compatibilidade e configurações de jogos no Steam Deck.
+  verify_actions:
+  - type: command_output
+    command: echo "ProtonDB is a website, not installable software"
+    expected_contains: never_match_this_string_12345
+    description: ProtonDB é apenas um site web, não software instalável
+  supported_os:
+  - linux
+  os_filter:
+    linux: true

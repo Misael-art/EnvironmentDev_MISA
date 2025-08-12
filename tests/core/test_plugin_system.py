@@ -633,4 +633,5 @@ class TestPluginConflictDetector:
         )
         
         # Should be incompatible (missing dependency)
-        is_
+        is_compatible = self.detector.validate_plugin_compatibility(plugin_with_deps)
+        assert is_compatible is False

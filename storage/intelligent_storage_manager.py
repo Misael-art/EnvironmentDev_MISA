@@ -115,15 +115,19 @@ class IntelligentStorageManager:
             
             # Initialize compression manager if needed (it handles cleanup too)
             if not self.compression_manager:
-                from .compression_manager import CompressionManager
                 self.compression_manager = CompressionManager()
             
             cleanup_result = self.compression_manager.cleanup_temporary_files(
                 installation_paths, temp_directories or []
             )
             
+            # Guard mocks that return non-int
+            try:
+                freed = int(cleanup_result.space_freed)
+            except Exception:
+                freed = 0
             self.logger.info(
-                f"Cleanup completed: {self._format_size(cleanup_result.space_freed)} freed"
+                f"Cleanup completed: {self._format_size(freed)} freed"
             )
             
             return cleanup_result
@@ -152,15 +156,18 @@ class IntelligentStorageManager:
             
             # Initialize distribution manager if needed (it handles removal suggestions)
             if not self.distribution_manager:
-                from .distribution_manager import DistributionManager
                 self.distribution_manager = DistributionManager()
             
             removal_suggestions = self.distribution_manager.suggest_component_removal(
                 current_components, required_space
             )
             
+            try:
+                count = len(removal_suggestions.suggestions)
+            except Exception:
+                count = 0
             self.logger.info(
-                f"Generated {len(removal_suggestions.suggestions)} removal suggestions"
+                f"Generated {count} removal suggestions"
             )
             
             return removal_suggestions
@@ -189,7 +196,6 @@ class IntelligentStorageManager:
             
             # Initialize distribution manager if needed
             if not self.distribution_manager:
-                from .distribution_manager import DistributionManager
                 self.distribution_manager = DistributionManager()
             
             distribution_result = self.distribution_manager.distribute_components(
@@ -226,15 +232,18 @@ class IntelligentStorageManager:
             
             # Initialize compression manager if needed
             if not self.compression_manager:
-                from .compression_manager import CompressionManager
                 self.compression_manager = CompressionManager()
             
             compression_result = self.compression_manager.compress_intelligently(
                 target_paths, compression_criteria or {}
             )
             
+            try:
+                saved = int(compression_result.space_saved)
+            except Exception:
+                saved = 0
             self.logger.info(
-                f"Compression completed: {self._format_size(compression_result.space_saved)} saved"
+                f"Compression completed: {self._format_size(saved)} saved"
             )
             
             return compression_result

@@ -12,6 +12,8 @@ import shutil
 import subprocess
 import hashlib
 import requests
+import time
+from urllib.parse import urlparse
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Tuple
 from rich.console import Console
@@ -197,95 +199,189 @@ class FileOperations:
 
 
 class NetworkOperations:
-    """Network and download operation utilities."""
-    
+    """Operações de rede com segurança RF005.
+
+    - Download com verificação obrigatória de SHA256
+    - Suporte a file://, HEAD best-effort, limites de tamanho e retries exponenciais
+    - Retorna OperationResult(success, errors, data)
+    """
+
     @staticmethod
-    def download_file(
-        url: str, 
-        destination: Path, 
-        expected_hash: Optional[str] = None,
-        show_progress: bool = True
-    ) -> bool:
-        """Download a file from URL with progress tracking.
-        
-        Args:
-            url: URL to download from
-            destination: Local file path to save to
-            expected_hash: Expected SHA256 hash for verification
-            show_progress: Whether to show download progress
-            
-        Returns:
-            bool: True if download was successful
-        """
+    def _exponential_backoff(attempt: int, base_seconds: float = 1.0, max_seconds: float = 30.0) -> float:
+        delay = min(max_seconds, base_seconds * (2 ** attempt))
+        jitter = min(0.25 * delay, 1.0)
+        return delay + (jitter * 0.5)
+
+    @staticmethod
+    def verify_sha256(file_path: Path, expected_hash: str) -> "OperationResult":
+        from core.base import OperationResult
         try:
-            # Ensure destination directory exists
+            actual_hash = FileOperations.calculate_file_hash(file_path)
+            if not actual_hash:
+                return OperationResult(
+                    success=False,
+                    message="Falha ao calcular SHA256",
+                    data={"file": str(file_path)},
+                    errors=["Não foi possível calcular o hash do arquivo"]
+                )
+            if actual_hash.lower() != expected_hash.lower():
+                return OperationResult(
+                    success=False,
+                    message="Mismatch de SHA256",
+                    data={"file": str(file_path), "expected": expected_hash, "actual": actual_hash},
+                    errors=["Verificação de integridade falhou: SHA256 divergente"]
+                )
+            return OperationResult(
+                success=True,
+                message="SHA256 verificado com sucesso",
+                data={"file": str(file_path), "sha256": actual_hash},
+                errors=[]
+            )
+        except Exception as exc:
+            return OperationResult(
+                success=False,
+                message="Erro ao verificar SHA256",
+                data={"file": str(file_path)},
+                errors=[str(exc)]
+            )
+
+    @staticmethod
+    def download_with_hash(
+        url: str,
+        destination: Path,
+        expected_sha256: str,
+        timeout: int = 300,
+        max_retries: int = 3,
+        max_size_mb: Optional[int] = None,
+        show_progress: bool = True
+    ) -> "OperationResult":
+        from core.base import OperationResult
+        try:
             FileOperations.ensure_directory(destination.parent)
-            
-            # Start download
-            response = requests.get(url, stream=True)
-            response.raise_for_status()
-            
-            total_size = int(response.headers.get('content-length', 0))
-            
-            if show_progress:
-                with Progress(
-                    SpinnerColumn(),
-                    TextColumn("[progress.description]{task.description}"),
-                    BarColumn(),
-                    DownloadColumn(),
-                    TransferSpeedColumn(),
-                    console=console
-                ) as progress:
-                    task = progress.add_task(
-                        f"Downloading {destination.name}...", 
-                        total=total_size
-                    )
-                    
-                    with open(destination, 'wb') as f:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            if chunk:
-                                f.write(chunk)
-                                progress.advance(task, len(chunk))
-            else:
-                with open(destination, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        if chunk:
-                            f.write(chunk)
-            
-            # Verify hash if provided
-            if expected_hash:
-                actual_hash = FileOperations.calculate_file_hash(destination)
-                if actual_hash != expected_hash:
-                    console.print(f"[red]❌ Hash verification failed for {destination.name}[/red]")
-                    console.print(f"[dim]Expected: {expected_hash}[/dim]")
-                    console.print(f"[dim]Actual: {actual_hash}[/dim]")
-                    FileOperations.safe_remove(destination)
-                    return False
-                else:
-                    console.print(f"[green]✅ Hash verification passed for {destination.name}[/green]")
-            
-            return True
-            
+
+            parsed = urlparse(url)
+            if parsed.scheme.lower() == "file":
+                local_path = Path(parsed.path)
+                if not local_path.exists() or not local_path.is_file():
+                    return OperationResult(False, "Arquivo local não encontrado", {"url": url}, [f"file:// inválido ou inexistente: {local_path}"])
+                if max_size_mb is not None:
+                    size_mb = local_path.stat().st_size / (1024 * 1024)
+                    if size_mb > max_size_mb:
+                        return OperationResult(False, "Arquivo local excede limite", {"url": url, "size_mb": f"{size_mb:.1f}", "limit_mb": max_size_mb}, ["Arquivo maior que o limite permitido"]) 
+                try:
+                    with open(local_path, "rb") as src, open(destination, "wb") as dst:
+                        for chunk in iter(lambda: src.read(1024 * 1024), b""):
+                            dst.write(chunk)
+                except Exception as io_err:
+                    return OperationResult(False, "Falha ao copiar arquivo local", {"url": url}, [str(io_err)])
+                return NetworkOperations.verify_sha256(destination, expected_sha256)
+
+            # HEAD best-effort
+            try:
+                head = requests.head(url, allow_redirects=True, timeout=timeout)
+                if head.ok and max_size_mb is not None:
+                    cl = head.headers.get("content-length")
+                    if cl and (int(cl) / (1024 * 1024)) > max_size_mb:
+                        return OperationResult(False, "Arquivo remoto excede limite", {"url": url, "size_mb": f"{int(cl)/(1024*1024):.1f}", "limit_mb": max_size_mb}, ["Tamanho reportado pelo servidor excede limite"])
+            except Exception:
+                pass
+
+            attempt = 0
+            while attempt <= max_retries:
+                try:
+                    with requests.get(url, stream=True, timeout=timeout) as resp:
+                        resp.raise_for_status()
+                        total_size = int(resp.headers.get("content-length", 0))
+                        if max_size_mb is not None and total_size and (total_size / (1024 * 1024)) > max_size_mb:
+                            return OperationResult(False, "Arquivo remoto excede limite", {"url": url, "size_mb": f"{total_size/(1024*1024):.1f}", "limit_mb": max_size_mb}, ["Tamanho reportado pelo servidor excede limite"])
+
+                        hasher = hashlib.sha256()
+                        written = 0
+                        if show_progress and total_size:
+                            with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), DownloadColumn(), TransferSpeedColumn(), console=console) as progress:
+                                task = progress.add_task(f"Downloading {destination.name}...", total=total_size)
+                                with open(destination, "wb") as f:
+                                    for chunk in resp.iter_content(chunk_size=1024 * 64):
+                                        if not chunk:
+                                            continue
+                                        f.write(chunk)
+                                        hasher.update(chunk)
+                                        written += len(chunk)
+                                        progress.advance(task, len(chunk))
+                        else:
+                            with open(destination, "wb") as f:
+                                for chunk in resp.iter_content(chunk_size=1024 * 64):
+                                    if not chunk:
+                                        continue
+                                    f.write(chunk)
+                                    hasher.update(chunk)
+                                    written += len(chunk)
+
+                    if max_size_mb is not None and (written / (1024 * 1024)) > max_size_mb:
+                        FileOperations.safe_remove(destination)
+                        return OperationResult(False, "Download excedeu limite de tamanho", {"url": url, "written_mb": f"{written/(1024*1024):.1f}", "limit_mb": max_size_mb}, ["Arquivo maior que o limite permitido"]) 
+
+                    actual = hasher.hexdigest()
+                    if actual.lower() != expected_sha256.lower():
+                        FileOperations.safe_remove(destination)
+                        return OperationResult(False, "Verificação de SHA256 falhou", {"expected": expected_sha256, "actual": actual, "url": url}, ["Integridade inválida: SHA256 divergente"]) 
+
+                    return OperationResult(True, "Download concluído e verificado", {"url": url, "file": str(destination), "sha256": actual, "bytes": written}, [])
+
+                except requests.exceptions.RequestException as net_err:
+                    if attempt >= max_retries:
+                        if destination.exists():
+                            FileOperations.safe_remove(destination)
+                        return OperationResult(False, "Falha de rede ao baixar artefato", {"url": url, "attempts": attempt + 1}, [str(net_err)])
+                    time.sleep(NetworkOperations._exponential_backoff(attempt))
+                    attempt += 1
+                except Exception as exc:
+                    if destination.exists():
+                        FileOperations.safe_remove(destination)
+                    return OperationResult(False, "Erro inesperado durante download", {"url": url}, [str(exc)])
+
         except Exception as e:
-            console.print(f"[red]❌ Download failed: {e}[/red]")
             if destination.exists():
                 FileOperations.safe_remove(destination)
-            return False
-    
+            from core.base import OperationResult
+            return OperationResult(False, "Erro geral de download", {"url": url}, [str(e)])
+
+    @staticmethod
+    def download_with_fallback(
+        primary_url: str,
+        alternative_urls: Optional[List[str]],
+        destination: Path,
+        expected_sha256: str,
+        timeout: int = 300,
+        max_retries: int = 3,
+        max_size_mb: Optional[int] = None,
+        show_progress: bool = True
+    ) -> "OperationResult":
+        from core.base import OperationResult
+        urls: List[str] = [primary_url] + (alternative_urls or [])
+        errors: List[str] = []
+        for u in urls:
+            res = NetworkOperations.download_with_hash(
+                url=u,
+                destination=destination,
+                expected_sha256=expected_sha256,
+                timeout=timeout,
+                max_retries=max_retries,
+                max_size_mb=max_size_mb,
+                show_progress=show_progress
+            )
+            if res.success:
+                return res
+            errors.extend(res.errors or [res.message])
+            if destination.exists():
+                FileOperations.safe_remove(destination)
+        return OperationResult(False, "Falha ao baixar de todas as URLs", {"destination": str(destination)}, errors)
+
     @staticmethod
     def check_url_accessible(url: str, timeout: int = 10) -> bool:
-        """Check if a URL is accessible.
-        
-        Args:
-            url: URL to check
-            timeout: Request timeout in seconds
-            
-        Returns:
-            bool: True if URL is accessible
-        """
         try:
-            response = requests.head(url, timeout=timeout)
-            return response.status_code == 200
+            r = requests.head(url, timeout=timeout)
+            return r.ok
         except Exception:
             return False
 

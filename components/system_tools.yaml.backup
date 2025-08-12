@@ -1,0 +1,120 @@
+# Ferramentas de Sistema e Utilitários Avançados
+# Este arquivo contém componentes relacionados a ferramentas de sistema e utilitários especializados
+
+Performance Overlay:
+  category: System Tools
+  description: Overlay de monitoramento de performance do sistema
+  install_method: portable
+  download_url: https://github.com/SteamDeckHomebrew/PerformanceOverlay/releases/latest/download/PerformanceOverlay.exe
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\SteamDeckTools\PerformanceOverlay.exe'
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Local\PerformanceOverlay\PerformanceOverlay.exe'
+
+Power Control:
+  category: System Tools
+  description: Ferramenta de controle de energia e performance
+  install_method: portable
+  download_url: https://github.com/SteamDeckHomebrew/PowerControl/releases/latest/download/PowerControl.exe
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\SteamDeckTools\PowerControl.exe'
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Local\PowerControl\PowerControl.exe'
+
+Fan Control:
+  category: System Tools
+  description: Controle avançado de ventoinhas do sistema
+  download_url: https://github.com/Rem0o/FanControl.Releases/releases/latest/download/FanControl.zip
+  install_method: archive
+  extract_path: 'C:\Program Files\FanControl'
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\FanControl\FanControl.exe'
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Local\FanControl\FanControl.exe'
+
+HWiNFO64:
+  category: System Tools
+  description: Ferramenta avançada de informações de hardware
+  download_url: https://www.hwinfo.com/files/hw64_800.exe
+  install_method: exe
+  install_args: /VERYSILENT /NORESTART
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\HWiNFO64\HWiNFO64.exe'
+    - type: registry_key_exists
+      hive: HKLM
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\HWiNFO64_is1
+      description: Verifica registro de instalação do HWiNFO64
+
+CPU-Z:
+  category: System Tools
+  description: Utilitário de informações detalhadas do processador
+  download_url: https://download.cpuid.com/cpu-z/cpu-z_2.08-en.exe
+  install_method: exe
+  install_args: /VERYSILENT /NORESTART
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\CPUID\CPU-Z\cpuz.exe'
+    - type: registry_key_exists
+      hive: HKLM
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\CPUID CPU-Z_is1
+      description: Verifica registro de instalação do CPU-Z
+
+GPU-Z:
+  category: System Tools
+  description: Utilitário de informações detalhadas da placa de vídeo
+  download_url: https://ftp.techpowerup.com/gpuz/GPU-Z.2.55.0.exe
+  install_method: exe
+  install_args: /S
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\GPU-Z\GPU-Z.exe'
+    - type: registry_key_exists
+      hive: HKLM
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GPU-Z
+      description: Verifica registro de instalação do GPU-Z
+
+CrystalDiskInfo:
+  category: System Tools
+  description: Monitor de saúde e informações de discos rígidos
+  download_url: https://crystalmark.info/redirect.php?product=CrystalDiskInfo
+  install_method: exe
+  install_args: /VERYSILENT /NORESTART
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\CrystalDiskInfo\DiskInfo64.exe'
+    - type: registry_key_exists
+      hive: HKLM
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\CrystalDiskInfo_is1
+      description: Verifica registro de instalação do CrystalDiskInfo
+
+Process Monitor:
+  category: System Tools
+  description: Monitor avançado de processos e atividade do sistema
+  download_url: https://download.sysinternals.com/files/ProcessMonitor.zip
+  install_method: archive
+  extract_path: 'C:\Program Files\Sysinternals'
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\Sysinternals\Procmon.exe'
+    - type: file_exists
+      path: 'C:\Program Files\Sysinternals\Procmon64.exe'

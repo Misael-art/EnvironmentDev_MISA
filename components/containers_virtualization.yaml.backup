@@ -1,0 +1,70 @@
+# Ferramentas de Containerização e Virtualização
+# Este arquivo contém componentes relacionados a containers e virtualização
+
+Docker Desktop:
+  category: Containers
+  description: Plataforma de desenvolvimento com containers Docker
+  download_url: https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe
+  install_method: exe
+  install_args: install --quiet
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\Docker\Docker\Docker Desktop.exe'
+    - type: file_exists
+      path: 'C:\Users\{username}\AppData\Local\Docker\Docker Desktop.exe'
+    - type: registry_key_exists
+      hive: HKLM
+      path: SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Docker Desktop
+      description: Verifica registro de instalação do Docker Desktop
+    - type: command_exists
+      name: 'docker'
+      description: Verifica se comando docker está disponível
+
+VirtualBox:
+  category: Virtualization
+  description: Software de virtualização da Oracle
+  download_url: https://download.virtualbox.org/virtualbox/7.0.12/VirtualBox-7.0.12-159484-Win.exe
+  install_method: exe
+  install_args: --silent
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\Oracle\VirtualBox\VirtualBox.exe'
+    - type: file_exists
+      path: 'C:\Program Files (x86)\Oracle\VirtualBox\VirtualBox.exe'
+    - type: registry_key_exists
+      hive: HKLM
+      path: SOFTWARE\Oracle\VirtualBox
+      description: Verifica registro do VirtualBox
+
+VMware Workstation:
+  category: Virtualization
+  description: Software de virtualização da VMware
+  download_url: https://www.vmware.com/products/workstation-pro/workstation-pro-evaluation.html
+  install_method: exe
+  install_args: /s /v/qn
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files (x86)\VMware\VMware Workstation\vmware.exe'
+    - type: registry_key_exists
+      hive: HKLM
+      path: SOFTWARE\VMware, Inc.\VMware Workstation
+      description: Verifica registro do VMware Workstation
+
+Hyper-V:
+  category: Virtualization
+  description: Tecnologia de virtualização nativa do Windows
+  install_method: windows_feature
+  feature_name: Microsoft-Hyper-V-All
+  verify_actions:
+    - type: windows_feature_enabled
+      feature_name: Microsoft-Hyper-V-All
+      description: Verifica se Hyper-V está habilitado
+    - type: file_exists
+      path: 'C:\Windows\System32\vmms.exe'
+      description: Verifica serviço de gerenciamento de máquinas virtuais

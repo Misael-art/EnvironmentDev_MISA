@@ -107,7 +107,7 @@ class VerificationAction(BaseModel):
         action_type = values.get('type')
         if action_type == VerificationActionType.CUSTOM_SCRIPT:
             if not v:
-                raise ValueError("Script is required for custom_script verification")
+                raise ValueError("Script is required for VerificationActionType.CUSTOM_SCRIPT verification")
         return v
     
     @validator('port')
@@ -116,8 +116,26 @@ class VerificationAction(BaseModel):
         action_type = values.get('type')
         if action_type == VerificationActionType.PORT_LISTENING:
             if not v:
-                raise ValueError("Port is required for port_listening verification")
+                raise ValueError("Port is required for VerificationActionType.PORT_LISTENING verification")
         return v
+
+    @root_validator(skip_on_failure=True)
+    def validate_required_fields_by_type(cls, values):
+        """RF005: garantir que campos obrigatórios por tipo estejam presentes."""
+        action_type = values.get('type')
+        if action_type in [VerificationActionType.FILE_EXISTS, VerificationActionType.DIRECTORY_EXISTS]:
+            if not values.get('path'):
+                raise ValueError(f"Path is required for {action_type} verification")
+        if action_type in [VerificationActionType.COMMAND_EXISTS, VerificationActionType.ENV_VAR_EXISTS]:
+            if not values.get('name'):
+                raise ValueError(f"Name is required for {action_type} verification")
+        if action_type == VerificationActionType.CUSTOM_SCRIPT:
+            if not values.get('script'):
+                raise ValueError("Script is required for VerificationActionType.CUSTOM_SCRIPT verification")
+        if action_type == VerificationActionType.PORT_LISTENING:
+            if not values.get('port'):
+                raise ValueError("Port is required for VerificationActionType.PORT_LISTENING verification")
+        return values
 
 
 class ComponentModel(BaseModel):
@@ -128,6 +146,7 @@ class ComponentModel(BaseModel):
     alternative_urls: Optional[List[str]] = Field(None, description="Alternative download URLs")
     install_method: InstallMethod = Field(..., description="Installation method")
     install_args: Optional[str] = Field(None, description="Installation arguments")
+    pypi_name: Optional[str] = Field(None, description="PyPI package name (para install_method=pip)")
     hash: Optional[str] = Field(None, description="File hash for verification")
     hash_algorithm: Optional[HashAlgorithm] = Field(HashAlgorithm.SHA256, description="Hash algorithm")
     dependencies: Optional[List[str]] = Field(default_factory=list, description="Component dependencies")
@@ -151,34 +170,35 @@ class ComponentModel(BaseModel):
     def validate_download_url(cls, v, values):
         """Validate download URL format."""
         if v:
-            url_pattern = re.compile(
-                r'^https?://'  # http:// or https://
-                r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'  # domain...
-                r'(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # host...
-                r'localhost|'  # localhost...
-                r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-                r'(?::\d+)?'  # optional port
+            # Aceita http(s):// e file://
+            http_pattern = re.compile(
+                r'^https?://'
+                r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'
+                r'(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
+                r'localhost|'
+                r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+                r'(?::\d+)?'
                 r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-            
-            if not url_pattern.match(v):
-                raise ValueError('Invalid URL format')
+            file_pattern = re.compile(r'^file://.+', re.IGNORECASE)
+            if not (http_pattern.match(v) or file_pattern.match(v)):
+                raise ValueError('Invalid URL format (expected http(s):// or file://)')
         return v
     
     @validator('alternative_urls')
     def validate_alternative_urls(cls, v):
         """Validate alternative URLs format."""
         if v:
-            url_pattern = re.compile(
-                r'^https?://'  # http:// or https://
-                r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'  # domain...
-                r'(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # host...
-                r'localhost|'  # localhost...
-                r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-                r'(?:\d+)?'  # optional port
+            http_pattern = re.compile(
+                r'^https?://'
+                r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+'
+                r'(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
+                r'localhost|'
+                r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+                r'(?:\d+)?'
                 r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-            
+            file_pattern = re.compile(r'^file://.+', re.IGNORECASE)
             for url in v:
-                if not url_pattern.match(url):
+                if not (http_pattern.match(url) or file_pattern.match(url)):
                     raise ValueError(f'Invalid alternative URL format: {url}')
         return v
     
@@ -221,10 +241,12 @@ class ComponentModel(BaseModel):
     
     @root_validator(skip_on_failure=True)
     def validate_install_requirements(cls, values):
-        """Validate installation requirements based on install method."""
+        """Valida requisitos de instalação por método, reforçando RF005."""
         install_method = values.get('install_method')
         download_url = values.get('download_url')
         install_args = values.get('install_args')
+        hash_value = values.get('hash')
+        pypi_name = values.get('pypi_name')
         
         # Methods that require download URL
         download_required_methods = [
@@ -233,6 +255,10 @@ class ComponentModel(BaseModel):
         
         if install_method in download_required_methods and not download_url:
             raise ValueError(f'download_url is required for {install_method} installation method')
+        # RF005: hash obrigatório e não-placeholder para métodos com download
+        if install_method in download_required_methods:
+            if not hash_value or hash_value in ['HASH_NEEDS_UPDATE', 'HASH_PENDENTE_VERIFICACAO']:
+                raise ValueError(f'hash is required and cannot be a placeholder for {install_method} installation method')
         
         # Methods that require install args
         args_required_methods = [
@@ -243,6 +269,16 @@ class ComponentModel(BaseModel):
 
         if install_method in args_required_methods and not install_args:
             raise ValueError(f'install_args is required for {install_method} installation method')
+
+        # PIP: exigir pypi_name e version; RF005 opcionalmente exige hash
+        if install_method == InstallMethod.PIP:
+            if not pypi_name:
+                raise ValueError('pypi_name is required for InstallMethod.PIP')
+            if not values.get('version'):
+                raise ValueError('version is required for InstallMethod.PIP')
+            # Segurança: hash também obrigatório para pip neste produto
+            if not hash_value or hash_value in ['HASH_NEEDS_UPDATE', 'HASH_PENDENTE_VERIFICACAO']:
+                raise ValueError('hash is required and cannot be a placeholder for InstallMethod.PIP')
 
         return values
 

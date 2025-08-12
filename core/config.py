@@ -131,6 +131,9 @@ class ConfigurationManager:
             self._last_loaded = datetime.now()
             
         except Exception as e:
+            # Repassar ValidationError para os testes que esperam esse tipo
+            if isinstance(e, ValidationError):
+                raise
             raise ConfigurationError(
                 f"Failed to load configuration: {str(e)}",
                 context={"config_sources": self._config_sources}
@@ -163,7 +166,8 @@ class ConfigurationManager:
             
             # Update configuration with loaded data
             self._update_config_from_dict(data)
-            self._config_sources.append(str(file_path))
+            # Registrar caminho absoluto para fontes de config para melhor auditoria
+            self._config_sources.append(str(Path(file_path).resolve()))
             
         except Exception as e:
             raise ConfigurationError(
@@ -239,6 +243,7 @@ class ConfigurationManager:
                 errors.append(f"Cannot create directory {directory}: {str(e)}")
         
         if errors:
+            # Levantar ValidationError simples (como nos testes)
             raise ValidationError(
                 f"Configuration validation failed: {'; '.join(errors)}",
                 context={"validation_errors": errors}

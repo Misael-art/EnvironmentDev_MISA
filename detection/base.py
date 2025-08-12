@@ -8,8 +8,8 @@ from datetime import datetime
 import subprocess
 import os
 
-from ..core.base import SystemComponentBase, OperationResult
-from ..core.exceptions import UnifiedDetectionError
+from core.base import SystemComponentBase, OperationResult
+from core.exceptions import UnifiedDetectionError
 from .interfaces import (
     DetectionEngineInterface,
     RuntimeDetectorInterface,

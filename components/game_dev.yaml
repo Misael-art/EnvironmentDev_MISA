@@ -2,7 +2,7 @@ Blender:
   category: Graphics
   description: Software 3D gratuito e de código aberto
   download_url: https://download.blender.org/release/Blender4.0/blender-4.0.2-windows-x64.msi
-  hash: HASH_PENDENTE_VERIFICACAO
+  hash: 38485adda7cc076ebbfa5017ffab214a6dd6290bf183f87d0b1c14aab68ee68b
   hash_algorithm: sha256
   install_args: /quiet /norestart
   install_method: msi

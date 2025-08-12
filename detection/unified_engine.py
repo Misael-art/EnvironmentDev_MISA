@@ -28,10 +28,11 @@ from .interfaces import (
     PackageManager,
     SteamDeckDetectionResult,
     HierarchicalResult,
-    ComprehensiveDetectionReport
+    ComprehensiveDetectionReport,
+    GapReport
 )
-from ..core.base import OperationResult
-from ..core.exceptions import UnifiedDetectionError
+from core.base import OperationResult
+from core.exceptions import UnifiedDetectionError
 
 
 class UnifiedDetectionEngine(
@@ -81,6 +82,22 @@ class UnifiedDetectionEngine(
                 "registry_patterns": [r"Git.*"],
                 "executable_names": ["git.exe"],
             },
+            "nodejs": {
+                "name": "Node.js",
+                "target_version": "20.0",
+                "commands": ["node --version"],
+                "env_vars": ["NODE_HOME", "NODE_PATH"],
+                "registry_patterns": [r"Node.*"],
+                "executable_names": ["node.exe"],
+            },
+            "python": {
+                "name": "Python",
+                "target_version": "3.12",
+                "commands": ["python --version", "py --version", "where python"],
+                "env_vars": ["PYTHONHOME", "PYTHONPATH"],
+                "registry_patterns": [r"Python.*"],
+                "executable_names": ["python.exe", "py.exe"],
+            },
             "dotnet_sdk": {
                 "name": ".NET SDK",
                 "target_version": "8.0",
@@ -96,6 +113,30 @@ class UnifiedDetectionEngine(
                 "env_vars": ["JAVA_HOME", "JDK_HOME"],
                 "registry_patterns": [r"Java.*JDK.*", r"OpenJDK.*"],
                 "executable_names": ["java.exe", "javac.exe"],
+            },
+            "make": {
+                "name": "Make",
+                "target_version": "4.0",
+                "commands": ["make --version", "where make"],
+                "env_vars": [],
+                "registry_patterns": [r"GnuWin.*Make", r"MSYS.*Make", r"Chocolatey.*make"],
+                "executable_names": ["make.exe"],
+            },
+            "powershell_preview": {
+                "name": "PowerShell Preview",
+                "target_version": "7.4",
+                "commands": ["pwsh-preview --version", "pwsh --version", "where pwsh-preview", "where pwsh"],
+                "env_vars": [],
+                "registry_patterns": [r"PowerShell.*Preview"],
+                "executable_names": ["pwsh-preview.exe", "pwsh.exe"],
+            },
+            "vulkan_sdk": {
+                "name": "Vulkan SDK",
+                "target_version": "1.3",
+                "commands": ["vulkaninfo --version", "where vulkaninfo"],
+                "env_vars": ["VULKAN_SDK"],
+                "registry_patterns": [r"Vulkan.*SDK"],
+                "executable_names": ["vulkaninfo.exe"],
             },
         }
         
@@ -165,6 +206,238 @@ class UnifiedDetectionEngine(
             raise UnifiedDetectionError(
                 error_msg,
                 context={"component": self._component_name, "operation": "detect_all_applications"}
+            )
+
+    def analyze_environment_gaps(self, expected_components: List[str]) -> GapReport:
+        """Compara componentes esperados com o que a engine detecta no ambiente.
+
+        A estratégia atual faz correspondência por nome (case-insensitive) com
+        entradas do Registro do Windows. Futuras versões podem ampliar para FS/CLI.
+        """
+        try:
+            registry_apps = self.scan_registry_installations()
+            present_map = {app.name.lower(): app for app in registry_apps}
+
+            # Complementar com detecção por CLI para runtimes essenciais
+            runtime_results = self.detect_essential_runtimes()
+            runtime_present_names: List[str] = []
+            runtime_conf_map: Dict[str, DetectionConfidence] = {}
+            for rr in runtime_results:
+                if rr.detected:
+                    key = (rr.runtime_name or "").lower()
+                    if key:
+                        runtime_present_names.append(key)
+                        runtime_conf_map[key] = rr.confidence
+                        # Adicionar sinônimos úteis para matching
+                        if "node" in key:
+                            for syn in ["node", "nodejs", "node.js"]:
+                                runtime_present_names.append(syn)
+                                runtime_conf_map[syn] = rr.confidence
+                        if "java" in key:
+                            for syn in ["java", "jdk", "java runtime", "java runtime environment", "jre"]:
+                                runtime_present_names.append(syn)
+                                runtime_conf_map[syn] = rr.confidence
+                        if "python" in key:
+                            for syn in ["python", "python 3", "python3", "python 3.12", "python 3.13"]:
+                                runtime_present_names.append(syn)
+                                runtime_conf_map[syn] = rr.confidence
+                        if "make" in key:
+                            for syn in ["make", "gnu make"]:
+                                runtime_present_names.append(syn)
+                                runtime_conf_map[syn] = rr.confidence
+                        if "powershell" in key:
+                            for syn in ["powershell", "powershell 7", "powershell preview", "pwsh", "pwsh-preview"]:
+                                runtime_present_names.append(syn)
+                                runtime_conf_map[syn] = rr.confidence
+                        if "vulkan" in key:
+                            for syn in ["vulkan", "vulkan sdk", "vulkaninfo"]:
+                                runtime_present_names.append(syn)
+                                runtime_conf_map[syn] = rr.confidence
+
+            # Complementar com detecção genérica por CLI para outras categorias (build tools/compilers/editors)
+            generic_cli_map: Dict[str, Dict[str, Any]] = {
+                "cmake": {
+                    "commands": [["cmake", "--version"], ["where", "cmake"]],
+                    "synonyms": ["cmake"],
+                    "fallback_names": ["cmake-gui.exe"],
+                },
+                "clang": {
+                    "commands": [
+                        ["clang", "--version"],
+                        ["where", "clang"],
+                        ["where", "clang-cl.exe"],
+                        ["where", "clang++.exe"],
+                        ["where", "llvm\bin\clang.exe"],
+                        ["where", "LLVM\bin\clang.exe"],
+                    ],
+                    "synonyms": ["clang", "llvm clang"],
+                    "fallback_names": ["clang-cl.exe", "clang++.exe", "llvm\\bin\\clang.exe"],
+                },
+                "gcc":   {
+                    "commands": [["gcc", "--version"], ["where", "gcc"]],
+                    "synonyms": ["gcc", "mingw", "mingw64"],
+                    "fallback_names": ["g++.exe", "mingw32-make.exe"],
+                },
+                "docker": {
+                    "commands": [["docker", "--version"], ["where", "docker"]],
+                    "synonyms": ["docker", "docker desktop"],
+                },
+                "vscode": {
+                    "commands": [["code", "--version"], ["where", "code"]],
+                    "synonyms": ["visual studio code", "vscode", "code"],
+                    "fallback_names": ["Code.exe"],
+                },
+                # MSVC (Visual C++): mapear como compilers presentes
+                "msvc": {
+                    "commands": [["cl"], ["where", "cl.exe"]],
+                    "synonyms": ["msvc", "visual c++", "visual studio c++", "cl", "compiler", "clang"],
+                    "fallback_names": ["cl.exe"],
+                },
+                # Retro DevKits: detectar via toolchains e variáveis comuns
+                "gba development kit (devkitarm)": {
+                    "commands": [["arm-none-eabi-gcc", "--version"], ["where", "arm-none-eabi-gcc.exe"]],
+                    "synonyms": ["gba development kit (devkitarm)", "devkitarm", "devkitpro"],
+                    "fallback_names": ["arm-none-eabi-gcc.exe"],
+                },
+                "gbdk (game boy development kit)": {
+                    "commands": [["cc65", "--version"], ["where", "cc65.exe"], ["gbdk", "--version"], ["where", "gbdk"],],
+                    "synonyms": ["gbdk (game boy development kit)", "gbdk", "game boy development kit"],
+                    "fallback_names": ["cc65.exe"],
+                },
+                "n64 development kit (libdragon)": {
+                    "commands": [["mips64-elf-gcc", "--version"], ["where", "mips64-elf-gcc.exe"]],
+                    "synonyms": ["n64 development kit (libdragon)", "libdragon", "nintendo 64 devkit"],
+                    "fallback_names": ["mips64-elf-gcc.exe"],
+                },
+                "neo geo development kit (ngdevkit)": {
+                    "commands": [["m68k-elf-gcc", "--version"], ["where", "m68k-elf-gcc.exe"]],
+                    "synonyms": ["neo geo development kit (ngdevkit)", "ngdevkit", "neo geo devkit"],
+                    "fallback_names": ["m68k-elf-gcc.exe"],
+                },
+                "psx development kit (psn00bsdk)": {
+                    "commands": [["mipsel-none-elf-gcc", "--version"], ["where", "mipsel-none-elf-gcc.exe"], ["where", "mipsel-unknown-elf-gcc.exe"]],
+                    "synonyms": ["psx development kit (psn00bsdk)", "psn00bsdk", "ps1 devkit"],
+                    "fallback_names": ["mipsel-none-elf-gcc.exe", "mipsel-unknown-elf-gcc.exe"],
+                },
+                "sgdk (sega genesis development kit)": {
+                    "commands": [["m68k-elf-gcc", "--version"], ["where", "m68k-elf-gcc.exe"]],
+                    "synonyms": ["sgdk (sega genesis development kit)", "sgdk", "sega genesis devkit", "megadrive devkit"],
+                    "fallback_names": ["m68k-elf-gcc.exe"],
+                },
+                "snes development kit (cc65)": {
+                    "commands": [["cc65", "--version"], ["where", "cc65.exe"]],
+                    "synonyms": ["snes development kit (cc65)", "snes devkit", "cc65"],
+                    "fallback_names": ["cc65.exe"],
+                },
+                "sega saturn development kit (jo-engine + yaul)": {
+                    "commands": [["sh-elf-gcc", "--version"], ["where", "sh-elf-gcc.exe"]],
+                    "synonyms": ["sega saturn development kit (jo-engine + yaul)", "saturn devkit", "jo-engine", "yaul"],
+                    "fallback_names": ["sh-elf-gcc.exe"],
+                },
+            }
+            for canonical, spec in generic_cli_map.items():
+                try:
+                    present = False
+                    for cmd in spec.get("commands", []):
+                        output = self._execute_command_safely(cmd)
+                        if output:
+                            present = True
+                            break
+                    # fallback: tentar localizar executáveis comuns
+                    if not present:
+                        for exe in spec.get("fallback_names", []):
+                            output = self._execute_command_safely(["where", exe])
+                            if output:
+                                present = True
+                                break
+                    # known_paths: checar caminhos padrão e globs comuns
+                    if not present:
+                        for p in spec.get("known_paths", []):
+                            xp = os.path.expandvars(p)
+                            if os.path.exists(xp):
+                                present = True
+                                break
+                    if not present:
+                        for gpat in spec.get("known_globs", []):
+                            xg = os.path.expandvars(gpat)
+                            # tentar expandir padrões simples com glob do shell (PowerShell/Windows)
+                            try:
+                                import glob
+                                matches = glob.glob(xg)
+                            except Exception:
+                                matches = []
+                            if any(os.path.exists(m) for m in matches):
+                                present = True
+                                break
+                    if present:
+                        runtime_present_names.append(canonical)
+                        runtime_conf_map[canonical] = DetectionConfidence.MEDIUM
+                        for syn in spec.get("synonyms", []):
+                            runtime_present_names.append(syn)
+                            runtime_conf_map[syn] = DetectionConfidence.MEDIUM
+                except Exception:
+                    continue
+
+            present: List[str] = []
+            missing: List[str] = []
+            confidence_index: Dict[str, DetectionConfidence] = {}
+
+            for expected in expected_components:
+                key = expected.lower()
+                found = None
+                # match exata ou por inclusão para nomes próximos
+                if key in present_map:
+                    found = present_map[key]
+                else:
+                    for name, app in present_map.items():
+                        if key in name or name in key:
+                            found = app
+                            break
+
+                # Se não encontrado no registro, tentar pelos runtimes presentes
+                if not found:
+                    # matching por palavras-chave com os nomes detectados por CLI
+                    for rname in runtime_present_names:
+                        if rname in key or key in rname:
+                            found = rname  # marcador não-nulo
+                            break
+
+                if found:
+                    present.append(expected)
+                    if hasattr(found, 'detection_confidence'):
+                        confidence_index[expected] = getattr(found, 'detection_confidence', DetectionConfidence.UNKNOWN)
+                    else:
+                        # Resultado vindo de runtime CLI
+                        # Escolher confiança reportada pelo runtime ou UNKNOWN
+                        conf = runtime_conf_map.get(key)
+                        if not conf:
+                            # tentar casar com sinônimos
+                            for rname in runtime_present_names:
+                                if rname in key or key in rname:
+                                    conf = runtime_conf_map.get(rname)
+                                    if conf:
+                                        break
+                        confidence_index[expected] = conf or DetectionConfidence.MEDIUM
+                else:
+                    missing.append(expected)
+
+            return GapReport(
+                expected_count=len(expected_components),
+                present_count=len(present),
+                missing_count=len(missing),
+                present=present,
+                missing=missing,
+                confidence_index=confidence_index,
+            )
+        except Exception as exc:
+            # Em falha, reporta tudo como faltante para comportamento seguro
+            return GapReport(
+                expected_count=len(expected_components),
+                present_count=0,
+                missing_count=len(expected_components),
+                present=[],
+                missing=expected_components,
+                confidence_index={},
             )
     
     def scan_registry_installations(self) -> List[RegistryApp]:

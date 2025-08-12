@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 
-from ..core.base import SystemComponentBase, OperationResult
+from core.base import SystemComponentBase, OperationResult
 
 
 class DetectionMethod(Enum):
@@ -121,6 +121,17 @@ class ComprehensiveDetectionReport:
     steam_deck_info: SteamDeckDetectionResult
     hierarchical_results: HierarchicalResult
     detection_summary: Dict[str, Any]
+
+
+@dataclass
+class GapReport:
+    """Relatório de lacunas entre componentes esperados e detectados."""
+    expected_count: int
+    present_count: int
+    missing_count: int
+    present: List[str]
+    missing: List[str]
+    confidence_index: Dict[str, DetectionConfidence]
 
 
 class DetectionEngineInterface(SystemComponentBase, ABC):

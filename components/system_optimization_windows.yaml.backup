@@ -1,0 +1,37 @@
+# Ferramentas de Otimização de Sistema (Windows)
+
+BloatyNosy:
+  category: System Optimization (Windows) # Categoria ajustada
+  dependencies: [7-Zip]
+  description: Ferramenta para analisar e remover bloatware do Windows 11
+  download_url: https://github.com/builtbybel/BloatyNosy/releases/latest/download/BloatyNosy.zip
+  extract_path: '${env:ProgramFiles}\BloatyNosy' # Exemplo de caminho
+  install_method: archive
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: '${env:ProgramFiles}\BloatyNosy\BloatyNosy.exe'
+
+Optimizer:
+  category: System Optimization (Windows)
+  description: Utilitário leve para ajustes de privacidade e desempenho do Windows
+  download_url: https://github.com/hellzerg/optimizer/releases/latest/download/Optimizer-16.9.exe # Link direto para .exe portátil
+  install_method: download # Apenas baixa o executável
+  download_dir: '${env:USERPROFILE}\Downloads\Optimizer' # Exemplo de diretório
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: '${env:USERPROFILE}\Downloads\Optimizer\Optimizer-16.9.exe' # Verifica no local de download
+
+WinaeroTweaker:
+  category: System Optimization (Windows)
+  description: Ferramenta para personalizar e ajustar opções ocultas do Windows
+  download_url: https://winaero.com/download.php?view.1796 # Link da página, requer download manual (ZIP)
+  install_method: none
+  post_install_message: "Acesse o link de download para baixar o ZIP do WinaeroTweaker e extraia-o manualmente."
+  # extract_path e dependencies removidos
+  verify_actions:
+    - type: file_exists
+      path: '${env:ProgramFiles}\WinaeroTweaker\WinaeroTweaker.exe'

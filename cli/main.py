@@ -507,6 +507,9 @@ def install(
         else:
             console.print(Panel(f"[yellow]⚠️ Método '{install_method}' não implementado neste comando[/yellow]", border_style="yellow"))
 
+    except typer.Exit:
+        # Preserva códigos de saída explícitos definidos acima (ex.: 2, 3, 4)
+        raise
     except Exception as e:
         console.print(f"[red]❌ Installation failed: {e}[/red]")
         raise typer.Exit(1)

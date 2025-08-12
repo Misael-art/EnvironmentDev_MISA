@@ -28,3 +28,9 @@ Consulte `SECURITY.md`. Hash é obrigatório para métodos com download e para `
 
 ## Testes
 - Executar: `pytest -q`
+
+## Estado das Categorias (detecção)
+
+| Categoria | Esperados | Presentes | Ausentes |
+|---|---:|---:|---:|
+

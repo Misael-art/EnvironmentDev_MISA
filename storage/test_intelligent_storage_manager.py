@@ -137,7 +137,7 @@ class TestIntelligentStorageManager(unittest.TestCase):
         installation_paths = ['/test/install1', '/test/install2']
         
         # Mock compression manager initialization and cleanup
-        with patch('environment_dev_deep_evaluation.storage.intelligent_storage_manager.CompressionManager') as mock_cm_class:
+        with patch('EnvironmentDev_MISA.storage.intelligent_storage_manager.CompressionManager') as mock_cm_class:
             mock_cm = Mock()
             mock_cm_class.return_value = mock_cm
             
@@ -164,7 +164,7 @@ class TestIntelligentStorageManager(unittest.TestCase):
         required_space = 500000000  # 500MB
         
         # Mock distribution manager initialization and suggestions
-        with patch('environment_dev_deep_evaluation.storage.intelligent_storage_manager.DistributionManager') as mock_dm_class:
+        with patch('EnvironmentDev_MISA.storage.intelligent_storage_manager.DistributionManager') as mock_dm_class:
             mock_dm = Mock()
             mock_dm_class.return_value = mock_dm
             
@@ -189,7 +189,7 @@ class TestIntelligentStorageManager(unittest.TestCase):
     def test_intelligently_distribute_across_multiple_drives(self):
         """Test intelligent distribution across drives"""
         # Mock distribution manager initialization and distribution
-        with patch('environment_dev_deep_evaluation.storage.intelligent_storage_manager.DistributionManager') as mock_dm_class:
+        with patch('EnvironmentDev_MISA.storage.intelligent_storage_manager.DistributionManager') as mock_dm_class:
             mock_dm = Mock()
             mock_dm_class.return_value = mock_dm
             
@@ -219,7 +219,7 @@ class TestIntelligentStorageManager(unittest.TestCase):
         target_paths = ['/test/path1', '/test/path2']
         
         # Mock compression manager initialization and compression
-        with patch('environment_dev_deep_evaluation.storage.intelligent_storage_manager.CompressionManager') as mock_cm_class:
+        with patch('EnvironmentDev_MISA.storage.intelligent_storage_manager.CompressionManager') as mock_cm_class:
             mock_cm = Mock()
             mock_cm_class.return_value = mock_cm
             
@@ -304,8 +304,8 @@ class TestIntelligentStorageManager(unittest.TestCase):
         self.assertIsNone(self.manager.compression_manager)
         
         # After calling methods that need them, they should be initialized
-        with patch('environment_dev_deep_evaluation.storage.intelligent_storage_manager.CompressionManager') as mock_cm:
-            with patch('environment_dev_deep_evaluation.storage.intelligent_storage_manager.DistributionManager') as mock_dm:
+        with patch('EnvironmentDev_MISA.storage.intelligent_storage_manager.CompressionManager') as mock_cm:
+            with patch('EnvironmentDev_MISA.storage.intelligent_storage_manager.DistributionManager') as mock_dm:
                 mock_cm.return_value = Mock()
                 mock_dm.return_value = Mock()
                 

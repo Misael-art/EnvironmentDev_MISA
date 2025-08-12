@@ -1,0 +1,65 @@
+# Ferramentas de Desenvolvimento para Environment Dev Script
+# Este arquivo contém componentes relacionados a ferramentas de desenvolvimento
+
+CMake:
+  category: Build Tools
+  dependencies: []
+  description: Sistema de build multiplataforma
+  download_url: https://github.com/Kitware/CMake/releases/download/v3.28.1/cmake-3.28.1-windows-x86_64.msi
+  install_args: /quiet /norestart ADD_CMAKE_TO_PATH=System
+  install_method: msi
+  hash: 05f46ef9dd9f8c274d92aabdb0006dc834363f393559ffde1d68d362cb0fc858
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\CMake\bin\cmake.exe'
+
+Clang:
+  category: Compilers
+  dependencies: []
+  description: Compilador Clang/LLVM para Windows
+  download_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/LLVM-17.0.6-win64.exe
+  install_args: /S
+  install_method: exe
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\LLVM\bin\clang.exe'
+
+# Definição movida para editors.yaml
+
+Git:
+  category: Version Control
+  description: Sistema de controle de versão distribuído
+  download_url: https://github.com/git-for-windows/git/releases/download/v2.43.0.windows.1/Git-2.43.0-64-bit.exe
+  install_method: exe
+  install_args: /VERYSILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\reg\shellhere,assoc,assoc_sh"
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\Git\bin\git.exe'
+    - type: command_exists
+      name: 'git'
+
+Git Bash:
+  category: Version Control
+  description: Git for Windows - Terminal Bash integrado
+  download_url: https://github.com/git-for-windows/git/releases/download/v2.43.0.windows.1/Git-2.43.0-64-bit.exe
+  install_method: exe
+  install_args: /VERYSILENT /NORESTART /NOCANCEL /SP- /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /COMPONENTS="icons,ext\reg\shellhere,assoc,assoc_sh"
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  dependencies:
+    - Git
+  verify_actions:
+    - type: file_exists
+      path: 'C:\Program Files\Git\git-bash.exe'
+    - type: file_exists
+      path: 'C:\Program Files\Git\bin\bash.exe'
+    - type: command_exists
+      name: 'bash'
+      description: Verifica se bash está disponível no PATH
+
+# Definição movida para runtimes.yaml

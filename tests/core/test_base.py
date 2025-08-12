@@ -101,10 +101,11 @@ class ConcreteSystemComponent(SystemComponentBase):
         super().__init__(config_manager)
         self._test_data = {}
     
-    def initialize(self) -> None:
+    def initialize(self) -> OperationResult:
         """Initialize the component."""
         self._logger.info("Initializing concrete system component")
         self._test_data["initialized"] = True
+        return OperationResult(True, "Initialized", None, None)
     
     def validate_configuration(self) -> None:
         """Validate component-specific configuration."""
@@ -261,8 +262,9 @@ class TestSystemComponentBase:
         self.mock_config.max_parallel_operations = 4
         
         # Should not raise any exception
+        # Use public validate method as internal may not exist
         try:
-            self.component._validate_configuration()
+            self.component.validate_configuration()
         except Exception as e:
             pytest.fail(f"Configuration validation failed unexpectedly: {e}")
     
@@ -271,7 +273,7 @@ class TestSystemComponentBase:
         self.mock_config.operation_timeout = -100
         
         with pytest.raises(ConfigurationError) as exc_info:
-            self.component._validate_configuration()
+            self.component.validate_configuration()
         
         assert "operation_timeout must be positive" in str(exc_info.value)
     
@@ -280,7 +282,7 @@ class TestSystemComponentBase:
         self.mock_config.max_parallel_operations = 0
         
         with pytest.raises(ConfigurationError) as exc_info:
-            self.component._validate_configuration()
+            self.component.validate_configuration()
         
         assert "max_parallel_operations must be positive" in str(exc_info.value)
     
