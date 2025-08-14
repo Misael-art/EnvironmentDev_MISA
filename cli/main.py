@@ -18,16 +18,28 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.tree import Tree
 from rich import print as rprint
+import json
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.config import ConfigurationManager, SystemConfiguration
+from core.logging_system import configure_logging
 from core.exceptions import EnvironmentDevDeepEvaluationError
 from core.base import OperationResult
 from validation.schemas import ComponentModel
 from cli.utils import NetworkOperations
-from detection.unified_engine import UnifiedDetectionEngine
+# Import tardio da engine para evitar quebras em plataformas não-Windows
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from detection.unified_engine import UnifiedDetectionEngine  # type: ignore
+from cli.commands import (
+    search_command as _search_command,
+    info_command as _info_command,
+    categories_command as _categories_command,
+    export_command as _export_command,
+    validate_command as _validate_command,
+)
 import shutil
 import zipfile
 import subprocess
@@ -41,7 +53,115 @@ app = typer.Typer(
     add_completion=False
 )
 console = Console()
+# Registrar comandos auxiliares conforme Plano Mestre (busca, info, categorias, export, validate)
+app.command("search")(_search_command)
+app.command("info")(_info_command)
+app.command("categories")(_categories_command)
+app.command("export")(_export_command)
+app.command("validate")(_validate_command)
 
+
+@app.command()
+def report(
+    format: str = typer.Option("json", "--format", "-f", help="Formato de saída (json, html)"),
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Arquivo de saída"),
+    include_plugins: bool = typer.Option(False, "--include-plugins", help="Incluir relatório de plugins"),
+    plugins_dir: Optional[str] = typer.Option(None, "--plugins-dir", help="Diretório de plugins")
+):
+    """
+    📊 Gera relatório avançado do ambiente (detecção + métricas) e opcionalmente conflitos de plugins.
+    """
+    try:
+        from detection.unified_engine import UnifiedDetectionEngine  # import local seguro
+        cfgm = get_config_manager()
+        eng = UnifiedDetectionEngine(cfgm)
+        eng.initialize()
+        comp_report = eng.generate_comprehensive_report()
+
+        payload = {
+            "report_id": comp_report.report_id,
+            "generated_at": comp_report.generation_timestamp.isoformat(),
+            "detection_summary": comp_report.detection_summary,
+            "registry_applications": [
+                {
+                    "name": a.name,
+                    "version": a.version,
+                    "publisher": a.publisher,
+                    "install_location": a.install_location,
+                    "confidence": getattr(a.detection_confidence, 'value', 'unknown'),
+                }
+                for a in comp_report.registry_applications
+            ],
+            "essential_runtimes": [
+                {
+                    "name": r.runtime_name,
+                    "detected": r.detected,
+                    "version": r.version,
+                    "method": getattr(r.detection_method, 'value', str(r.detection_method)),
+                    "confidence": getattr(r.confidence, 'value', 'unknown'),
+                }
+                for r in comp_report.essential_runtimes
+            ],
+        }
+
+        # Plugins (opcional)
+        if include_plugins and plugins_dir:
+            try:
+                from core.plugin_system import PluginSystemManager
+                pman = PluginSystemManager(Path(plugins_dir), cfgm)
+                pman.initialize()
+                # Carregar todos subdiretórios que contenham plugin.json
+                for sub in Path(plugins_dir).iterdir():
+                    if sub.is_dir() and (sub / "plugin.json").exists():
+                        pman.load_plugin(sub)
+                payload["plugins"] = {
+                    "plugins": pman.list_plugins(),
+                    "conflicts": pman.generate_conflict_report(),
+                }
+            except Exception as e:
+                payload["plugins_error"] = str(e)
+
+        # Saída
+        if format.lower() == "json":
+            import json as _json
+            text = _json.dumps(payload, indent=2, ensure_ascii=False)
+        elif format.lower() == "html":
+            # HTML simples auto-contido
+            rows = []
+            for a in payload["registry_applications"]:
+                rows.append(f"<tr><td>{a['name']}</td><td>{a['version']}</td><td>{a['publisher']}</td><td>{a['confidence']}</td></tr>")
+            table = """
+            <table border=1 cellspacing=0 cellpadding=6>
+              <thead><tr><th>Aplicativo</th><th>Versão</th><th>Publisher</th><th>Confiança</th></tr></thead>
+              <tbody>
+            """ + "\n".join(rows) + "</tbody></table>"
+            text = f"""
+            <html><head><meta charset='utf-8'><title>Relatório do Ambiente</title></head>
+            <body>
+              <h1>Relatório do Ambiente</h1>
+              <p><strong>ID:</strong> {payload['report_id']}</p>
+              <p><strong>Gerado em:</strong> {payload['generated_at']}</p>
+              <h2>Resumo</h2>
+              <pre>{payload['detection_summary']}</pre>
+              <h2>Aplicativos do Registro</h2>
+              {table}
+            </body></html>
+            """
+        else:
+            console.print(f"[red]❌ Formato não suportado: {format}[/red]")
+            raise typer.Exit(1)
+
+        if output:
+            Path(output).write_text(text, encoding="utf-8")
+            console.print(Panel(f"[green]✅ Relatório salvo em[/green] {output}", border_style="green"))
+        else:
+            if format.lower() == "json":
+                console.print_json(text)
+            else:
+                console.print(text)
+    except Exception as e:
+        console.print(f"[red]❌ Falha ao gerar relatório: {e}[/red]")
+        raise typer.Exit(1)
 # Global configuration manager
 config_manager: Optional[ConfigurationManager] = None
 
@@ -55,6 +175,12 @@ def get_config_manager() -> ConfigurationManager:
     global config_manager
     if config_manager is None:
         config_manager = ConfigurationManager()
+        # Configurar logging global com base na configuração do sistema
+        try:
+            configure_logging(config_manager.get_config())
+        except Exception:
+            # Não quebrar CLI se logging falhar; continuará com stdout padrão
+            pass
     return config_manager
 
 
@@ -166,7 +292,8 @@ def list_components(
         "--available", 
         "-a", 
         help="Show only available (not installed) components"
-    )
+    ),
+    output_json: bool = typer.Option(False, "--json", help="Emitir saída em JSON")
 ):
     """
     📋 List all available components with their status.
@@ -214,6 +341,7 @@ def list_components(
         confidence_index = {}
         registry_index = []
         try:
+            from detection.unified_engine import UnifiedDetectionEngine  # import local seguro
             detection_engine = UnifiedDetectionEngine(get_config_manager())
             detection_engine.initialize()
             # Analyze presence with engine (uses registry+CLI+sinônimos)
@@ -270,6 +398,29 @@ def list_components(
             )
             component_count += 1
 
+        if output_json:
+            import json as _json
+            payload = []
+            for component_name, component_data in entries:
+                comp_lower = component_name.lower()
+                is_present = comp_lower in present_set
+                status = "installed" if is_present else "available"
+                confidence_value = confidence_index.get(comp_lower, 'unknown')
+                if confidence_value == 'unknown':
+                    for app_name, conf in registry_index:
+                        if comp_lower == app_name or comp_lower in app_name or app_name in comp_lower:
+                            confidence_value = conf
+                            break
+                payload.append({
+                    "name": component_name,
+                    "category": component_data.get('category', 'Unknown'),
+                    "description": component_data.get('description', ''),
+                    "status": status,
+                    "version": component_data.get('version', 'Unknown'),
+                    "confidence": confidence_value,
+                })
+            console.print_json(_json.dumps({"count": len(payload), "components": payload}))
+        else:
         if component_count == 0:
             console.print("[yellow]📭 No components found matching the criteria[/yellow]")
         else:
@@ -437,7 +588,14 @@ def _install_component_internal(component_name: str, force: bool = False, dry_ru
             if install_method == "exe":
                 args = component_def.get("install_args") or "/S"
                 try:
-                    proc = subprocess.run([str(destination), *str(args).split()], capture_output=True, text=True, timeout=3600)
+                    # Aceitar lista de args ou string. Evitar split ingênuo.
+                    if isinstance(args, list):
+                        cmd = [str(destination), *[str(a) for a in args]]
+                    else:
+                        import shlex
+                        # No Windows, shlex.split funciona com posix=False
+                        cmd = [str(destination), *shlex.split(str(args), posix=False)]
+                    proc = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
                     if proc.returncode != 0:
                         console.print(Panel(f"[red]❌ Instalador retornou código {proc.returncode}[/red]\n{proc.stderr}", border_style="red"))
                         return OperationResult(False, "Installer error", {"exit_code": 4}, errors=[proc.stderr or "installer returned non-zero"])
@@ -456,7 +614,17 @@ def _install_component_internal(component_name: str, force: bool = False, dry_ru
                     console.print(f"[red]❌ Falha msiexec: {e}[/red]")
                     return OperationResult(False, "Falha msiexec", {"exit_code": 4}, errors=[str(e)])
             else:
-                console.print(Panel("[green]✅ ZIP verificado. Extraia manualmente ou implemente handler dedicado.[/green]", border_style="green"))
+                # Implementação segura de extração ZIP
+                try:
+                    extract_dir = downloads_dir / f"{Path(filename).stem}"
+                    from cli.utils import ArchiveOperations
+                    ok = ArchiveOperations.extract_archive(destination, extract_dir)
+                    if not ok:
+                        return OperationResult(False, "Falha ao extrair ZIP", {"exit_code": 4})
+                    console.print(Panel(f"[green]✅ ZIP verificado e extraído[/green]\n📂 {extract_dir}", border_style="green"))
+                except Exception as e:
+                    console.print(f"[red]❌ Falha ao extrair ZIP: {e}[/red]")
+                    return OperationResult(False, "Falha extração ZIP", {"exit_code": 4}, errors=[str(e)])
             return OperationResult(True, "Installed", {"exit_code": 0})
 
         elif install_method == "pip":
@@ -553,7 +721,8 @@ def install_many(
         # Montar ComponentsFile unificado a partir de todos os YAMLs
         import yaml
         from validation.schemas import ComponentsFile, ComponentModel
-        all_components: Dict[str, ComponentModel] = {}
+        raw_components: Dict[str, Dict] = {}
+        validated_components: Dict[str, ComponentModel] = {}
         comp_dir = Path("components")
         for yml in comp_dir.glob("*.yaml"):
             try:
@@ -563,33 +732,44 @@ def install_many(
                     continue
                 for name, comp in data.items():
                     if isinstance(name, str) and isinstance(comp, dict):
+                        raw_components[name] = comp
                         try:
-                            all_components[name] = ComponentModel(**comp)
+                            validated_components[name] = ComponentModel(**comp)
                         except Exception:
-                            # ignora inválidos nesta fase; instalador verificará diretamente
-                            pass
+                            # Manter no raw; validação ocorrerá no instalador (RF005 estrito)
+                            continue
             except Exception:
                 continue
 
-        if not all_components:
+        if not raw_components:
             console.print("[red]❌ Nenhum componente carregado de components/*.yaml[/red]")
             raise typer.Exit(1)
 
-        cf = ComponentsFile(components=all_components)
+        # ComponentsFile somente para resolver dependências quando possível
+        cf = ComponentsFile(components=validated_components) if validated_components else None
         from validation.schemas import get_component_dependencies
 
         # Resolver ordem: deps primeiro
         ordered_unique: List[str] = []
         seen = set()
         for name in components:
-            if name not in cf.components:
-                console.print(f"[yellow]⚠️ '{name}' não está definido; será ignorado[/yellow]")
-                continue
+            if cf and name in cf.components:
             deps = get_component_dependencies(cf, name)
             for dep in deps + [name]:
                 if dep not in seen:
                     seen.add(dep)
                     ordered_unique.append(dep)
+            elif name in raw_components:
+                # Fallback: resolve deps a partir do YAML cru (sem validação)
+                raw_deps = raw_components.get(name, {}).get("dependencies", []) or []
+                if not isinstance(raw_deps, list):
+                    raw_deps = []
+                for dep in list(raw_deps) + [name]:
+                    if dep not in seen:
+                        seen.add(dep)
+                        ordered_unique.append(dep)
+            else:
+                console.print(f"[yellow]⚠️ '{name}' não está definido; será ignorado[/yellow]")
 
         if not ordered_unique:
             console.print("[yellow]Nenhum componente válido para instalar[/yellow]")
@@ -666,6 +846,7 @@ def analyze_gaps(
 
         # Executa a engine com tolerância a falhas: se falhar, considerar tudo ausente
         try:
+            from detection.unified_engine import UnifiedDetectionEngine  # import local seguro
             engine = UnifiedDetectionEngine(get_config_manager())
             engine.initialize()
             with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as progress:
@@ -687,13 +868,19 @@ def analyze_gaps(
 
         if output_json:
             import json
-            console.print_json(json.dumps({
+            present_items = []
+            for name in report.present:
+                conf = report.confidence_index.get(name)
+                conf_val = getattr(conf, 'value', str(conf) if conf else 'unknown')
+                present_items.append({"name": name, "confidence": conf_val})
+            payload = {
                 "expected": report.expected_count,
                 "present": report.present_count,
                 "missing": report.missing_count,
-                "present_list": report.present,
-                "missing_list": report.missing,
-            }))
+                "present_items": present_items,
+                "missing_items": report.missing,
+            }
+            console.print_json(json.dumps(payload))
         else:
             table = Table(title="🔍 Lacunas do Ambiente")
             table.add_column("Status", style="cyan")
@@ -716,6 +903,88 @@ def analyze_gaps(
         console.print(f"[red]❌ Analysis failed: {e}[/red]")
         raise typer.Exit(1)
 
+
+@app.command()
+def report(
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Arquivo de saída (.json ou .html)"),
+    include_plugins: bool = typer.Option(False, "--include-plugins", help="Incluir dados de plugins, se disponíveis"),
+    plugins_dir: Optional[str] = typer.Option(None, "--plugins-dir", help="Diretório de plugins a considerar")
+):
+    """Gera um relatório do ambiente (JSON/HTML) com base na UnifiedDetectionEngine."""
+    try:
+        display_banner()
+
+        # Coletar componentes esperados
+        components_dir = Path("components")
+        expected: List[str] = []
+        if components_dir.exists():
+            import yaml
+            for y in components_dir.glob("*.yaml"):
+                try:
+                    with open(y, "r", encoding="utf-8") as f:
+                        data = yaml.safe_load(f)
+                    if not isinstance(data, dict):
+                        continue
+                    expected.extend([n for n, v in data.items() if isinstance(v, dict)])
+                except Exception:
+                    continue
+
+        # Gerar relatório via engine com fallback seguro
+        try:
+            engine = UnifiedDetectionEngine(get_config_manager())
+            engine.initialize()
+            gaps = engine.analyze_environment_gaps(expected)
+            detection_summary = {
+                "expected": gaps.expected_count,
+                "present": gaps.present_count,
+                "missing": gaps.missing_count,
+            }
+        except Exception as e:
+            detection_summary = {
+                "expected": len(expected),
+                "present": 0,
+                "missing": len(expected),
+                "error": str(e),
+            }
+            gaps = None  # type: ignore
+
+        report_obj: Dict[str, Any] = {
+            "generated_at": datetime.now().isoformat(),
+            "detection_summary": detection_summary,
+            "present_list": getattr(gaps, "present", []),
+            "missing_list": getattr(gaps, "missing", expected),
+        }
+        if include_plugins:
+            report_obj["plugins"] = {"included": True, "plugins_dir": plugins_dir or "default"}
+
+        # Saída
+        if output and output.lower().endswith(".html"):
+            html_path = Path(output)
+            html = [
+                "<html><head><meta charset='utf-8'><title>Environment Report</title></head><body>",
+                "<h1>Environment Report</h1>",
+                f"<p>Generated at: {report_obj['generated_at']}</p>",
+                "<h2>Summary</h2>",
+                f"<ul><li>Expected: {detection_summary.get('expected')}</li><li>Present: {detection_summary.get('present')}</li><li>Missing: {detection_summary.get('missing')}</li></ul>",
+                "<h2>Present</h2>",
+                "<ul>" + "".join(f"<li>{n}</li>" for n in report_obj["present_list"]) + "</ul>",
+                "<h2>Missing</h2>",
+                "<ul>" + "".join(f"<li>{n}</li>" for n in report_obj["missing_list"]) + "</ul>",
+                "</body></html>",
+            ]
+            html_path.write_text("\n".join(html), encoding="utf-8")
+            console.print(Panel(f"[green]✅ Relatório HTML gerado:[/green] {html_path}", border_style="green"))
+        else:
+            # JSON por padrão (stdout e arquivo se fornecido)
+            js = json.dumps(report_obj, ensure_ascii=False, indent=2)
+            if output:
+                Path(output).write_text(js, encoding="utf-8")
+                console.print(Panel(f"[green]✅ Relatório JSON gerado:[/green] {output}", border_style="green"))
+            else:
+                console.print_json(js)
+    except Exception as e:
+        console.print(f"[red]❌ Report generation failed: {e}[/red]")
+        raise typer.Exit(1)
 
 @app.command()
 def backup(
@@ -861,7 +1130,7 @@ def doctor():
         console.print("[blue]🩺 Running system diagnostics...[/blue]\n")
         
         # System Information
-        info_table = Table(title="System Information")
+        info_table = Table(title="Informações do Sistema")
         info_table.add_column("Component", style="cyan")
         info_table.add_column("Status", style="green")
         info_table.add_column("Details", style="white")
@@ -874,6 +1143,40 @@ def doctor():
         info_table.add_row("Architecture", "✅ OK", platform.machine())
         
         console.print(info_table)
+        console.print()
+
+        # Diretórios críticos e espaço em disco
+        disk_table = Table(title="Diretórios Críticos e Espaço em Disco")
+        disk_table.add_column("Diretório", style="cyan")
+        disk_table.add_column("Existe", style="green")
+        disk_table.add_column("Espaço Livre", style="white")
+        disk_table.add_column("Total", style="white")
+
+        try:
+            cfgm = get_config_manager()
+            cfg = cfgm.get_config()
+            paths = [
+                cfg.base_directory,
+                cfg.downloads_directory,
+                cfg.logs_directory,
+                cfg.cache_directory,
+                cfg.backups_directory,
+            ]
+            import shutil as _shutil
+            for p in paths:
+                exists = Path(p).exists()
+                try:
+                    usage = _shutil.disk_usage(p if exists else Path(p).parent)
+                    free_gb = f"{usage.free / (1024**3):.1f} GB"
+                    total_gb = f"{usage.total / (1024**3):.1f} GB"
+                except Exception:
+                    free_gb = "-"
+                    total_gb = "-"
+                disk_table.add_row(p, "✅" if exists else "❌", free_gb, total_gb)
+        except Exception:
+            pass
+
+        console.print(disk_table)
         console.print()
         
         # Configuration Check
