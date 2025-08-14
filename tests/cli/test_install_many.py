@@ -119,3 +119,6 @@ def test_install_many_stops_on_rf005_when_no_continue(monkeypatch, temp_env: Pat
     # Deve sair com 2 (RF005) e citar hash
     assert result.exit_code in (1, 2)
     assert "hash" in result.stdout.lower()
+
+
+

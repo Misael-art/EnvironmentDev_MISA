@@ -17,6 +17,7 @@ import traceback
 
 from .exceptions import PluginSystemError
 from .base import SystemComponentBase
+from .config import ConfigurationManager
 
 
 class PluginStatus(Enum):
@@ -560,9 +561,8 @@ class PluginSystemManager(SystemComponentBase):
     """Gerenciador principal do sistema de plugins"""
     
     def __init__(self, plugins_dir: Path, config_manager=None):
-        # Para compatibilidade, criamos um config_manager mock se não fornecido
+        # Para compatibilidade, criamos um config_manager se não fornecido
         if config_manager is None:
-            from .config import ConfigurationManager
             config_manager = ConfigurationManager()
         
         super().__init__(config_manager, "PluginSystemManager")
@@ -696,10 +696,16 @@ class PluginSystemManager(SystemComponentBase):
                     self.logger.error(f"Checksum inválido para plugin {metadata.name}")
                     return False
             
-            # Aqui seria implementada verificação de assinatura digital
-            if metadata.signature:
-                # Placeholder para verificação de assinatura
-                pass
+            # Verificação de assinatura digital (best-effort / required via config)
+            cfg = self._config_manager.get_config()
+            if cfg.plugin_signature_verification:
+                if metadata.signature:
+                    if not self._verify_signature(plugin_path, metadata.signature):
+                        self.logger.error(f"Assinatura inválida para plugin {metadata.name}")
+                        return False
+                elif getattr(cfg, 'plugin_signature_required', False):
+                    self.logger.error(f"Assinatura ausente para plugin {metadata.name} e é obrigatória")
+                    return False
             
             return True
             
@@ -718,6 +724,16 @@ class PluginSystemManager(SystemComponentBase):
                     hasher.update(f.read())
         
         return hasher.hexdigest()
+
+    def _verify_signature(self, plugin_path: Path, signature: str) -> bool:
+        """Verifica assinatura (placeholder robusto): compara com SHA256 do pacote.
+        Em versões futuras, integrar PKI ou assinatura baseada em chave pública.
+        """
+        try:
+            checksum = self._calculate_plugin_checksum(plugin_path)
+            return checksum.lower() == signature.lower()
+        except Exception:
+            return False
     
     def _update_conflicts(self):
         """Atualiza lista de conflitos"""

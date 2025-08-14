@@ -37,3 +37,6 @@ def test_doctor_runs_and_outputs_tables(monkeypatch, tmp_path: Path):
     assert "informações do sistema" in out or "system information" in out
     assert "diretórios críticos" in out or "directories" in out
     assert "espaço em disco" in out or "disk" in out
+
+
+

@@ -6,7 +6,11 @@ all detection operations including registry scanning, portable app detection,
 runtime detection, and hierarchical prioritization.
 """
 
-import winreg
+import sys
+try:
+    import winreg  # type: ignore
+except Exception:  # Non-Windows or restricted environments
+    winreg = None  # type: ignore
 import os
 import re
 import uuid
@@ -163,11 +167,15 @@ class UnifiedDetectionEngine(
             DetectionMethod.COMMAND_LINE,
         ]
     
-    def initialize(self) -> None:
-        """Initialize the unified detection engine."""
-        self._logger.info("Initializing UnifiedDetectionEngine")
-        # Perform any initialization tasks here
-        self._logger.info("UnifiedDetectionEngine initialized successfully")
+    def initialize(self) -> OperationResult:
+        """Initialize the unified detection engine and return OperationResult."""
+        try:
+            self._logger.info("Initializing UnifiedDetectionEngine")
+            # Perform any initialization tasks here
+            self._logger.info("UnifiedDetectionEngine initialized successfully")
+            return OperationResult(True, "UnifiedDetectionEngine initialized")
+        except Exception as e:
+            return OperationResult(False, f"Initialization failed: {e}", errors=[str(e)])
     
     def detect_all_applications(self) -> DetectionResult:
         """Detect all applications using unified detection methods."""
@@ -276,8 +284,8 @@ class UnifiedDetectionEngine(
                         ["where", "clang"],
                         ["where", "clang-cl.exe"],
                         ["where", "clang++.exe"],
-                        ["where", "llvm\bin\clang.exe"],
-                        ["where", "LLVM\bin\clang.exe"],
+                        ["where", r"llvm\\bin\\clang.exe"],
+                        ["where", r"LLVM\\bin\\clang.exe"],
                     ],
                     "synonyms": ["clang", "llvm clang"],
                     "fallback_names": ["clang-cl.exe", "clang++.exe", "llvm\\bin\\clang.exe"],
@@ -474,6 +482,10 @@ class UnifiedDetectionEngine(
     def scan_registry_installations(self) -> List[RegistryApp]:
         """Scan Windows Registry for installed applications."""
         try:
+            if sys.platform != "win32" or winreg is None:
+                # Non-Windows: return empty list gracefully
+                self._logger.debug("Registry scanning skipped: non-Windows platform")
+                return []
             self._logger.debug("Starting registry scan for installed applications")
             registry_apps = []
             
@@ -519,6 +531,8 @@ class UnifiedDetectionEngine(
         try:
             full_path = f"{subkey_path}\\{subkey_name}"
             
+            if winreg is None:
+                return None
             with winreg.OpenKey(hkey, full_path) as app_key:
                 # Extract basic information
                 name = self._get_registry_value(app_key, "DisplayName")
@@ -716,74 +730,45 @@ class UnifiedDetectionEngine(
         try:
             self._logger.debug("Starting hierarchical detection prioritization")
             
-            # Import hierarchical prioritizer
-            from core.hierarchical_detection_prioritizer import HierarchicalDetectionPrioritizer
-            from core.detection_base import DetectedApplication, DetectionMethod, ApplicationStatus
-            
-            prioritizer = HierarchicalDetectionPrioritizer()
+            # Simplified prioritization without external dependencies
+            # (removido: imports inexistentes em core.*)
             
             # Get all detection results
             registry_apps = self.scan_registry_installations()
             essential_runtimes = self.detect_essential_runtimes()
             
-            # Convert registry apps to DetectedApplication format
+            # Converter resultados a uma estrutura mínima baseada em DetectionResult
             detected_applications = []
             for reg_app in registry_apps:
-                # Convert confidence properly
-                confidence_value = 0.8  # Default
-                if hasattr(reg_app.detection_confidence, 'value'):
-                    if isinstance(reg_app.detection_confidence.value, (int, float)):
-                        confidence_value = reg_app.detection_confidence.value / 100.0
-                    elif isinstance(reg_app.detection_confidence.value, str):
-                        try:
-                            confidence_value = float(reg_app.detection_confidence.value) / 100.0
-                        except ValueError:
-                            confidence_value = 0.8
-                elif hasattr(reg_app, 'detection_confidence'):
-                    if isinstance(reg_app.detection_confidence, (int, float)):
-                        confidence_value = reg_app.detection_confidence / 100.0 if reg_app.detection_confidence > 1 else reg_app.detection_confidence
-                
-                detected_app = DetectedApplication(
-                    name=reg_app.name,
-                    version=reg_app.version,
-                    install_path=reg_app.install_location,
-                    executable_path="",  # Not available from registry
-                    detection_method=DetectionMethod.REGISTRY,
-                    status=ApplicationStatus.INSTALLED,
-                    confidence=confidence_value
+                detected_applications.append(
+                    self._create_detection_result(
+                        detected=True,
+                        method=DetectionMethod.REGISTRY,
+                        details={
+                            "name": reg_app.name,
+                            "version": reg_app.version,
+                            "install_path": reg_app.install_location,
+                        },
+                    )
                 )
-                detected_applications.append(detected_app)
             
             # Convert runtime results to DetectedApplication format
             for runtime_result in essential_runtimes:
                 if runtime_result.detected:
-                    # Convert confidence properly
-                    confidence_value = 0.8  # Default
-                    if hasattr(runtime_result.confidence, 'value'):
-                        if isinstance(runtime_result.confidence.value, (int, float)):
-                            confidence_value = runtime_result.confidence.value / 100.0
-                        elif isinstance(runtime_result.confidence.value, str):
-                            try:
-                                confidence_value = float(runtime_result.confidence.value) / 100.0
-                            except ValueError:
-                                confidence_value = 0.8
-                    elif hasattr(runtime_result, 'confidence'):
-                        if isinstance(runtime_result.confidence, (int, float)):
-                            confidence_value = runtime_result.confidence / 100.0 if runtime_result.confidence > 1 else runtime_result.confidence
-                    
-                    detected_app = DetectedApplication(
-                        name=runtime_result.runtime_name,
-                        version=runtime_result.version or "Unknown",
-                        install_path=runtime_result.install_path or "",
-                        executable_path="",
-                        detection_method=runtime_result.detection_method,
-                        status=ApplicationStatus.INSTALLED,
-                        confidence=confidence_value
+                    detected_applications.append(
+                        self._create_detection_result(
+                            detected=True,
+                            method=runtime_result.detection_method,
+                            details={
+                                "name": runtime_result.runtime_name,
+                                "version": runtime_result.version or "Unknown",
+                                "install_path": runtime_result.install_path or "",
+                            },
+                        )
                     )
-                    detected_applications.append(detected_app)
             
-            # Apply hierarchical prioritization to all detected applications
-            primary_detections = []
+            # Heurística simples: itens detectados (confiança alta>média>baixa)
+            primary_detections = self._prioritize_by_confidence(detected_applications)
             secondary_detections = []
             priority_scores = {}
             
@@ -796,20 +781,9 @@ class UnifiedDetectionEngine(
                 component_groups[component_key].append(app)
             
             # Prioritize each component group
+            # Mantém agrupamento para possível extensão futura; hoje, já priorizados
             for component_name, apps in component_groups.items():
-                hierarchical_result = prioritizer.prioritize_detections(
-                    component_name=component_name,
-                    detected_applications=apps,
-                    required_version=self._get_required_version(component_name)
-                )
-                
-                if hierarchical_result.recommended_option:
-                    primary_detections.append(hierarchical_result.recommended_option)
-                    if hierarchical_result.priority_score:
-                        priority_scores[component_name] = hierarchical_result.priority_score.total_score
-                
-                # Add alternatives as secondary detections
-                secondary_detections.extend(hierarchical_result.alternative_options)
+                _ = apps  # reservado para evolução
             
             # Generate selection rationale
             selection_rationale = self._generate_selection_rationale(

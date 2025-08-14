@@ -59,7 +59,7 @@ class PortableApp:
     version: Optional[str]
     executable_path: str
     directory: str
-    detection_method: str
+    detection_method: DetectionMethod
     confidence: DetectionConfidence
 
 

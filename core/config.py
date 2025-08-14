@@ -55,6 +55,8 @@ class SystemConfiguration:
     plugin_system_enabled: bool = True
     plugin_signature_verification: bool = True
     plugin_sandboxing_enabled: bool = True
+    # If true, assinatura é obrigatória; quando false, verificação é best-effort
+    plugin_signature_required: bool = False
     
     # UI settings
     modern_ui_enabled: bool = True

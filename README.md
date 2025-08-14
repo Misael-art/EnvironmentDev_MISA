@@ -10,6 +10,8 @@ Ferramenta CLI/TUI para gerenciar componentes de desenvolvimento com segurança 
 - CLI: `python mecha.py --help`
 - TUI: `python tui/main.py`
 
+> Documento diretor: veja `docs/PLANO_MESTRE.md` (fonte única da verdade para requisitos, UX/CX, segurança RF005, arquitetura, qualidade e processo). Qualquer mudança funcional deve atualizar esse plano.
+
 ## Comandos principais
 - `list-components`:
   - Lista componentes com coluna de Confiança (cores/ícones) enriquecida pela UnifiedDetectionEngine (Registry + CLI + sinônimos)
@@ -25,9 +27,15 @@ Ferramenta CLI/TUI para gerenciar componentes de desenvolvimento com segurança 
 - `update --hashes-only`: executa o HashUpdater para atualizar hashes pendentes
 - `analyze-gaps`: compara componentes esperados vs ambiente (UnifiedDetectionEngine)
 - `doctor`: diagnóstico avançado (rede/DNS/SSL, clock skew, disco, diretórios críticos) com códigos de saída
+- `report`: gera relatório avançado (JSON/HTML) do ambiente e, opcionalmente, plugins (`--include-plugins --plugins-dir`)
+
+### Códigos de saída (resumo)
+- install/install-many: 0 sucesso; 2 RF005; 3 download/hash; 4 instalação; demais 1.
+- analyze-gaps: 0 sucesso; 2 lacunas com `--fail-on-missing`.
+- backup/restore/update/uninstall/doctor: 0 sucesso; 1 erro.
 
 ## Segurança (RF005)
-Consulte `SECURITY.md`. Hash é obrigatório para métodos com download e para `pip` (wheel verificada e instalação offline). Placeholders são rejeitados.
+Consulte `SECURITY.md` e `docs/PLANO_MESTRE.md`. Hash é obrigatório para métodos com download e para `pip` (wheel verificada e instalação offline). Placeholders são rejeitados.
 
 ## Próximos passos
 - Curar URLs em `components/*.yaml` para links oficiais estáveis; preencher `alternative_urls` quando aplicável

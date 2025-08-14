@@ -638,4 +638,5 @@ def validate_command(
                     console.print("[dim]This feature will be available in a future update[/dim]")
         
     except Exception as e:
-        console.print(f
+        console.print(f"[red]❌ Validation failed: {e}[/red]")
+        raise typer.Exit(1)
