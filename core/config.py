@@ -32,7 +32,7 @@ class SystemConfiguration:
     hierarchical_detection_enabled: bool = True
     
     # Download settings
-    download_timeout: int = 300  # seconds
+    download_timeout: int = 3600  # seconds
     max_download_retries: int = 3
     parallel_downloads_enabled: bool = True
     hash_verification_required: bool = True

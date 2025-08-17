@@ -75,6 +75,12 @@ class NavigationBreadcrumb(Static):
             Rendered breadcrumb
         """
         return self._render_breadcrumb()
+    
+    def on_click(self) -> None:
+        """Handle click events on breadcrumbs."""
+        # This would need to be implemented to handle navigation
+        # For now, we'll just show a notification
+        pass
 
 class ContextMenu(Container):
     """Context menu widget for right-click actions."""

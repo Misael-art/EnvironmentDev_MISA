@@ -363,13 +363,28 @@ class EnhancedErrorHandler:
             
             # Reraise if requested
             if reraise:
+                # Create more detailed error messages with actionable steps
+                error_message = f"Error in {context.component}.{context.operation}: {str(exception)}"
+                
+                # Add specific recovery suggestions based on error type
+                if isinstance(exception, PermissionError):
+                    error_message += "\n\nSuggested actions:\n1. Run the application as administrator\n2. Check file permissions"
+                elif isinstance(exception, FileNotFoundError):
+                    error_message += "\n\nSuggested actions:\n1. Verify the file path is correct\n2. Check if the file exists"
+                elif isinstance(exception, NetworkError):
+                    error_message += "\n\nSuggested actions:\n1. Check your internet connection\n2. Verify firewall settings"
+                elif isinstance(exception, ValidationError):
+                    error_message += "\n\nSuggested actions:\n1. Check the input data format\n2. Validate required fields"
+                
                 if not isinstance(exception, EnvironmentDevDeepEvaluationError):
                     raise EnvironmentDevDeepEvaluationError(
-                        f"Error in {context.component}.{context.operation}: {str(exception)}",
+                        message=error_message,
                         context=context.to_dict(),
                         cause=exception
                     ) from exception
                 else:
+                    # Update the existing exception message
+                    exception.message = error_message
                     raise exception
             
             return report

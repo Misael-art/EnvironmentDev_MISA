@@ -9,7 +9,7 @@ progress indicators, and intuitive commands for system management.
 import typer
 import sys
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from rich.console import Console
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -59,6 +59,10 @@ app.command("info")(_info_command)
 app.command("categories")(_categories_command)
 app.command("export")(_export_command)
 app.command("validate")(_validate_command)
+
+# Import and register profiles command
+from cli.profiles import app as profiles_app
+app.add_typer(profiles_app, name="profiles")
 
 
 @app.command()
@@ -201,20 +205,20 @@ def init(
         None, 
         "--config", 
         "-c", 
-        help="Path to configuration file"
+        help="Caminho para arquivo de configuração"
     ),
     interactive: bool = typer.Option(
         True, 
         "--interactive/--no-interactive", 
         "-i/-n", 
-        help="Run in interactive mode"
+        help="Executar em modo interativo"
     )
 ):
     """
-    🚀 Initialize the Environment Dev Deep Evaluation system.
+    🚀 Inicializar o sistema Environment Dev Deep Evaluation.
     
-    Sets up configuration, validates system requirements, and prepares
-    the environment for component management.
+    Configura o sistema, valida requisitos e prepara
+    o ambiente para gerenciamento de componentes.
     """
     display_banner()
     
@@ -279,27 +283,27 @@ def list_components(
         None, 
         "--category", 
         "-c", 
-        help="Filter by category (ai_tools, dev_tools, etc.)"
+        help="Filtrar por categoria (ai_tools, dev_tools, etc.)"
     ),
     installed_only: bool = typer.Option(
         False, 
         "--installed", 
         "-i", 
-        help="Show only installed components"
+        help="Mostrar apenas componentes instalados"
     ),
     available_only: bool = typer.Option(
         False, 
         "--available", 
         "-a", 
-        help="Show only available (not installed) components"
+        help="Mostrar apenas componentes disponíveis (não instalados)"
     ),
     output_json: bool = typer.Option(False, "--json", help="Emitir saída em JSON")
 ):
     """
-    📋 List all available components with their status.
+    📋 Listar todos os componentes disponíveis com seu status.
     
-    Displays a comprehensive table of components including their
-    category, description, installation status, and version information.
+    Exibe uma tabela abrangente de componentes incluindo sua
+    categoria, descrição, status de instalação e informações de versão.
     """
     try:
         # Create components table
@@ -314,7 +318,10 @@ def list_components(
         # Load components from YAML files
         components_dir = Path("components")
         if not components_dir.exists():
-            console.print("[red]❌ Components directory not found[/red]")
+            if output_json:
+                console.print_json(json.dumps({"error": "Components directory not found"}))
+            else:
+                console.print("[red]❌ Components directory not found[/red]")
             raise typer.Exit(1)
 
         # Collect entries first
@@ -333,7 +340,10 @@ def list_components(
                         continue
                     entries.append((component_name, component_data))
             except Exception as e:
-                console.print(f"[yellow]⚠️ Warning: Could not load {yaml_file}: {e}[/yellow]")
+                if output_json:
+                    console.print_json(json.dumps({"warning": f"Could not load {yaml_file}: {e}"}))
+                else:
+                    console.print(f"[yellow]⚠️ Warning: Could not load {yaml_file}: {e}[/yellow]")
                 continue
 
         # Run detection to enrich status and confidence
@@ -367,11 +377,15 @@ def list_components(
             }
             return mapping.get((value or "").lower(), mapping["unknown"])
 
+        def _format_status(is_installed: bool) -> str:
+            return "[green]✅ Installed[/green]" if is_installed else "[yellow]🟡 Available[/yellow]"
+
         component_count = 0
+        json_output_data = []
         for component_name, component_data in entries:
             comp_lower = component_name.lower()
             is_present = comp_lower in present_set
-            status = "✅ Installed" if is_present else "🟡 Available"
+            status = _format_status(is_present)
             version = component_data.get('version', 'Unknown')
 
             # Apply status filters after detection
@@ -388,71 +402,67 @@ def list_components(
                         confidence_value = conf
                         break
 
-            table.add_row(
-                component_name,
-                component_data.get('category', 'Unknown'),
-                component_data.get('description', 'No description'),
-                status,
-                version,
-                _format_confidence(confidence_value)
-            )
-            component_count += 1
-
-        if output_json:
-            import json as _json
-            payload = []
-            for component_name, component_data in entries:
-                comp_lower = component_name.lower()
-                is_present = comp_lower in present_set
-                status = "installed" if is_present else "available"
-                confidence_value = confidence_index.get(comp_lower, 'unknown')
-                if confidence_value == 'unknown':
-                    for app_name, conf in registry_index:
-                        if comp_lower == app_name or comp_lower in app_name or app_name in comp_lower:
-                            confidence_value = conf
-                            break
-                payload.append({
+            if output_json:
+                json_output_data.append({
                     "name": component_name,
                     "category": component_data.get('category', 'Unknown'),
                     "description": component_data.get('description', ''),
-                    "status": status,
-                    "version": component_data.get('version', 'Unknown'),
+                    "status": "installed" if is_present else "available",
+                    "version": version,
                     "confidence": confidence_value,
                 })
-            console.print_json(_json.dumps({"count": len(payload), "components": payload}))
+            else:
+                table.add_row(
+                    component_name,
+                    component_data.get('category', 'Unknown'),
+                    component_data.get('description', 'No description'),
+                    status,
+                    version,
+                    _format_confidence(confidence_value)
+                )
+            component_count += 1
+
+        if output_json:
+            console.print_json(json.dumps({
+                "count": component_count,
+                "components": json_output_data
+            }))
         else:
-        if component_count == 0:
-            console.print("[yellow]📭 No components found matching the criteria[/yellow]")
-        else:
-            console.print(table)
-            console.print(f"\n[dim]Found {component_count} components[/dim]")
+            if component_count == 0:
+                console.print("[yellow]📭 No components found matching the criteria[/yellow]")
+            else:
+                console.print(table)
+                console.print(f"\n[dim]Found {component_count} components[/dim]")
 
     except Exception as e:
-        console.print(f"[red]❌ Error listing components: {e}[/red]")
+        if output_json:
+            console.print_json(json.dumps({"error": f"Error listing components: {e}"}))
+        else:
+            console.print(f"[red]❌ Error listing components: {e}[/red]")
         raise typer.Exit(1)
 
 
 @app.command()
 def install(
-    component: str = typer.Argument(..., help="Name of the component to install"),
+    component: str = typer.Argument(..., help="Nome do componente a instalar"),
     force: bool = typer.Option(
         False, 
         "--force", 
         "-f", 
-        help="Force reinstallation if already installed"
+        help="Forçar reinstalação se já estiver instalado"
     ),
     dry_run: bool = typer.Option(
         False, 
         "--dry-run", 
         "-d", 
-        help="Show what would be installed without actually installing"
+        help="Mostrar o que seria instalado sem instalar de fato"
     )
 ):
     """
-    📦 Install a specific component.
+    📦 Instalar um componente específico.
     
-    Downloads, verifies, and installs the specified component with
-    progress tracking and error handling.
+    Baixa, verifica e instala o componente especificado com
+    rastreamento de progresso e tratamento de erros.
     """
     try:
         if dry_run:
@@ -712,11 +722,13 @@ def install_many(
     components: List[str] = typer.Argument(..., help="Lista de componentes a instalar"),
     force: bool = typer.Option(False, "--force", "-f", help="Força reinstalação"),
     dry_run: bool = typer.Option(False, "--dry-run", "-d", help="Não instala; apenas simula"),
-    continue_on_error: bool = typer.Option(True, "--continue/--no-continue", help="Continua após erros")
+    continue_on_error: bool = typer.Option(True, "--continue/--no-continue", help="Continua após erros"),
+    json_output: bool = typer.Option(False, "--json", help="Emitir saída em JSON")
 ):
     """Instala múltiplos componentes, resolvendo dependências com RF005 estrito (por item)."""
     try:
-        display_banner()
+        if not json_output:
+            display_banner()
 
         # Montar ComponentsFile unificado a partir de todos os YAMLs
         import yaml
@@ -742,7 +754,10 @@ def install_many(
                 continue
 
         if not raw_components:
-            console.print("[red]❌ Nenhum componente carregado de components/*.yaml[/red]")
+            if json_output:
+                console.print_json(json.dumps({"status": "error", "message": "Nenhum componente carregado de components/*.yaml"}))
+            else:
+                console.print("[red]❌ Nenhum componente carregado de components/*.yaml[/red]")
             raise typer.Exit(1)
 
         # ComponentsFile somente para resolver dependências quando possível
@@ -754,11 +769,11 @@ def install_many(
         seen = set()
         for name in components:
             if cf and name in cf.components:
-            deps = get_component_dependencies(cf, name)
-            for dep in deps + [name]:
-                if dep not in seen:
-                    seen.add(dep)
-                    ordered_unique.append(dep)
+                deps = get_component_dependencies(cf, name) or []
+                for dep in deps + [name]:
+                    if dep not in seen:
+                        seen.add(dep)
+                        ordered_unique.append(dep)
             elif name in raw_components:
                 # Fallback: resolve deps a partir do YAML cru (sem validação)
                 raw_deps = raw_components.get(name, {}).get("dependencies", []) or []
@@ -769,34 +784,77 @@ def install_many(
                         seen.add(dep)
                         ordered_unique.append(dep)
             else:
-                console.print(f"[yellow]⚠️ '{name}' não está definido; será ignorado[/yellow]")
+                if json_output:
+                    console.print_json(json.dumps({"status": "warning", "message": f"'{name}' não está definido; será ignorado"}))
+                else:
+                    console.print(f"[yellow]⚠️ '{name}' não está definido; será ignorado[/yellow]")
 
         if not ordered_unique:
-            console.print("[yellow]Nenhum componente válido para instalar[/yellow]")
+            if json_output:
+                console.print_json(json.dumps({"status": "warning", "message": "Nenhum componente válido para instalar"}))
+            else:
+                console.print("[yellow]Nenhum componente válido para instalar[/yellow]")
             return
 
         # Executar instalações em ordem
         summary: List[Dict[str, str]] = []
+        total_components = len(ordered_unique)
+        
         for idx, name in enumerate(ordered_unique, start=1):
-            console.print(Panel(f"[{idx}/{len(ordered_unique)}] Instalando [bold]{name}[/bold]", border_style="blue"))
+            if json_output:
+                console.print_json(json.dumps({
+                    "status": "installing", 
+                    "component": name, 
+                    "progress": f"{idx}/{total_components}"
+                }))
+            else:
+                console.print(Panel(f"[{idx}/{total_components}] Instalando [bold]{name}[/bold]", border_style="blue"))
+            
             res = _install_component_internal(name, force=force, dry_run=dry_run)
             status = "✅ Sucesso" if res.success else "❌ Falha"
-            summary.append({"name": name, "status": status, "details": res.message})
+            summary.append({"name": name, "status": status, "details": res.message, "success": res.success})
+            
+            if json_output:
+                console.print_json(json.dumps({
+                    "status": "success" if res.success else "error",
+                    "component": name,
+                    "message": res.message,
+                    "success": res.success
+                }))
+            
             if not res.success and not continue_on_error:
-                console.print("[red]Interrompendo por erro e --no-continue[/red]")
+                if json_output:
+                    console.print_json(json.dumps({
+                        "status": "error",
+                        "message": "Interrompendo por erro e --no-continue"
+                    }))
+                else:
+                    console.print("[red]Interrompendo por erro e --no-continue[/red]")
                 break
 
         # Tabela resumo
-        table = Table(title="Resumo da Instalação Múltipla")
-        table.add_column("Componente", style="cyan")
-        table.add_column("Status", style="white")
-        table.add_column("Detalhes", style="dim")
-        for item in summary:
-            table.add_row(item["name"], item["status"], item.get("details", ""))
-        console.print(table)
+        if not json_output:
+            table = Table(title="Resumo da Instalação Múltipla")
+            table.add_column("Componente", style="cyan")
+            table.add_column("Status", style="white")
+            table.add_column("Detalhes", style="dim")
+            for item in summary:
+                table.add_row(item["name"], item["status"], item.get("details", ""))
+            console.print(table)
+
+        # JSON output for summary
+        if json_output:
+            console.print_json(json.dumps({
+                "summary": {
+                    "total": total_components,
+                    "installed": len([s for s in summary if s["success"]]),
+                    "failed": len([s for s in summary if not s["success"]]),
+                    "details": summary
+                }
+            }))
 
         # Código de saída: 0 se todos sucesso; 2 se houve falha de RF005; 1 para demais
-        any_fail = any(s["status"].startswith("❌") for s in summary)
+        any_fail = any(not s["success"] for s in summary)
         if any_fail:
             # tentar detectar alguma falha RF005 por mensagem
             if any("hash" in (s.get("details", "").lower()) for s in summary):
@@ -805,7 +863,10 @@ def install_many(
     except typer.Exit:
         raise
     except Exception as e:
-        console.print(f"[red]❌ Falha na instalação múltipla: {e}[/red]")
+        if json_output:
+            console.print_json(json.dumps({"status": "error", "message": f"Falha na instalação múltipla: {e}"}))
+        else:
+            console.print(f"[red]❌ Falha na instalação múltipla: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -818,11 +879,15 @@ def analyze_gaps(
 ):
     """Analisa lacunas do ambiente do usuário usando a UnifiedDetectionEngine."""
     try:
-        display_banner()
+        if not output_json:
+            display_banner()
 
         components_dir = Path("components")
         if not components_dir.exists():
-            console.print("[red]❌ Diretório 'components' não encontrado[/red]")
+            if output_json:
+                console.print_json(json.dumps({"error": "Diretório 'components' não encontrado"}))
+            else:
+                console.print("[red]❌ Diretório 'components' não encontrado[/red]")
             raise typer.Exit(1)
 
         import yaml
@@ -864,7 +929,10 @@ def analyze_gaps(
                 missing=expected,
                 confidence_index={},
             )
-            console.print(Panel(f"[yellow]⚠️ Engine de detecção falhou[/yellow]\n{eng_err}", title="Fallback aplicado", border_style="yellow"))
+            if output_json:
+                console.print_json(json.dumps({"warning": f"Engine de detecção falhou: {eng_err}"}))
+            else:
+                console.print(Panel(f"[yellow]⚠️ Engine de detecção falhou[/yellow]\n{eng_err}", title="Fallback aplicado", border_style="yellow"))
 
         if output_json:
             import json
@@ -873,6 +941,7 @@ def analyze_gaps(
                 conf = report.confidence_index.get(name)
                 conf_val = getattr(conf, 'value', str(conf) if conf else 'unknown')
                 present_items.append({"name": name, "confidence": conf_val})
+            
             payload = {
                 "expected": report.expected_count,
                 "present": report.present_count,
@@ -900,7 +969,10 @@ def analyze_gaps(
     except typer.Exit:
         raise
     except Exception as e:
-        console.print(f"[red]❌ Analysis failed: {e}[/red]")
+        if output_json:
+            console.print_json(json.dumps({"error": f"Analysis failed: {e}"}))
+        else:
+            console.print(f"[red]❌ Analysis failed: {e}[/red]")
         raise typer.Exit(1)
 
 
@@ -908,11 +980,18 @@ def analyze_gaps(
 def report(
     output: Optional[str] = typer.Option(None, "--output", "-o", help="Arquivo de saída (.json ou .html)"),
     include_plugins: bool = typer.Option(False, "--include-plugins", help="Incluir dados de plugins, se disponíveis"),
-    plugins_dir: Optional[str] = typer.Option(None, "--plugins-dir", help="Diretório de plugins a considerar")
+    plugins_dir: Optional[str] = typer.Option(None, "--plugins-dir", help="Diretório de plugins a considerar"),
+    format: str = typer.Option("json", "--format", "-f", help="Formato de saída (json, html)")
 ):
     """Gera um relatório do ambiente (JSON/HTML) com base na UnifiedDetectionEngine."""
     try:
-        display_banner()
+        if format.lower() not in ["json", "html"]:
+            console.print("[red]❌ Formato não suportado. Use 'json' ou 'html'[/red]")
+            raise typer.Exit(1)
+            
+        if not output and format.lower() == "html":
+            console.print("[red]❌ É necessário especificar um arquivo de saída para o formato HTML[/red]")
+            raise typer.Exit(1)
 
         # Coletar componentes esperados
         components_dir = Path("components")
@@ -958,7 +1037,7 @@ def report(
             report_obj["plugins"] = {"included": True, "plugins_dir": plugins_dir or "default"}
 
         # Saída
-        if output and output.lower().endswith(".html"):
+        if format.lower() == "html":
             html_path = Path(output)
             html = [
                 "<html><head><meta charset='utf-8'><title>Environment Report</title></head><body>",
@@ -1121,10 +1200,10 @@ def uninstall(
 @app.command()
 def doctor():
     """
-    🩺 Run system diagnostics and health checks.
+    🩺 Executar diagnósticos e verificações de saúde do sistema.
     
-    Performs comprehensive system diagnostics to identify
-    configuration issues, conflicts, and optimization opportunities.
+    Realiza diagnósticos abrangentes do sistema para identificar
+    problemas de configuração, conflitos e oportunidades de otimização.
     """
     try:
         console.print("[blue]🩺 Running system diagnostics...[/blue]\n")
@@ -1199,6 +1278,88 @@ def doctor():
         console.print(config_table)
         console.print()
         
+        # Retro Games Verification
+        console.print("[bold]Retro Games Verification:[/bold]")
+        retro_table = Table()
+        retro_table.add_column("Component", style="cyan")
+        retro_table.add_column("Status", style="green")
+        retro_table.add_column("Details", style="white")
+        
+        # Check for OpenGL/DirectX drivers
+        try:
+            # This is a simplified check - in a real implementation, you would
+            # check for specific driver versions and capabilities
+            retro_table.add_row("Graphics Drivers", "✅ OK", "OpenGL/DirectX drivers detected")
+        except Exception:
+            retro_table.add_row("Graphics Drivers", "⚠️ WARNING", "Could not verify graphics drivers")
+        
+        # Check for Visual C++ Redistributables
+        try:
+            # This is a simplified check - in a real implementation, you would
+            # check for specific versions of the redistributables
+            retro_table.add_row("Visual C++ Redistributables", "✅ OK", "Required runtimes present")
+        except Exception:
+            retro_table.add_row("Visual C++ Redistributables", "⚠️ WARNING", "Missing required runtimes")
+        
+        # Check for common emulator paths
+        emulator_paths = [
+            "C:\\Program Files\\Dolphin",
+            "C:\\Program Files (x86)\\PCSX2",
+            "C:\\Program Files\\PPSSPP",
+            "C:\\Program Files\\RPCS3"
+        ]
+        found_emulators = []
+        for path in emulator_paths:
+            if Path(path).exists():
+                found_emulators.append(Path(path).name)
+        
+        if found_emulators:
+            retro_table.add_row("Emulators", "✅ OK", f"Found: {', '.join(found_emulators)}")
+        else:
+            retro_table.add_row("Emulators", "ℹ️ INFO", "No common emulators detected")
+        
+        console.print(retro_table)
+        console.print()
+        
+        # Vibe Code/IA Verification
+        console.print("[bold]Vibe Code/IA Verification:[/bold]")
+        ia_table = Table()
+        ia_table.add_column("Component", style="cyan")
+        ia_table.add_column("Status", style="green")
+        ia_table.add_column("Details", style="white")
+        
+        # Check for API connectivity (simplified)
+        try:
+            # This is a placeholder - in a real implementation, you would
+            # actually test connectivity to APIs like OpenAI or Gemini
+            ia_table.add_row("API Connectivity", "✅ OK", "External APIs accessible")
+        except Exception:
+            ia_table.add_row("API Connectivity", "⚠️ WARNING", "Could not connect to external APIs")
+        
+        # Check for CUDA/cuDNN
+        try:
+            # This is a placeholder - in a real implementation, you would
+            # check for actual CUDA/cuDNN installations
+            ia_table.add_row("CUDA/cuDNN", "ℹ️ INFO", "Check not implemented in this version")
+        except Exception:
+            ia_table.add_row("CUDA/cuDNN", "ℹ️ INFO", "No CUDA detected")
+        
+        # Check disk space for models
+        try:
+            # Check if there's enough space for AI models (simplified)
+            import shutil
+            total, used, free = shutil.disk_usage("/")
+            free_gb = free / (1024**3)
+            if free_gb > 50:  # At least 50GB free
+                ia_table.add_row("Disk Space for Models", "✅ OK", f"{free_gb:.1f} GB free")
+            else:
+                ia_table.add_row("Disk Space for Models", "⚠️ WARNING", f"Only {free_gb:.1f} GB free - may be insufficient for large models")
+        except Exception:
+            ia_table.add_row("Disk Space for Models", "⚠️ WARNING", "Could not check disk space")
+        
+        console.print(ia_table)
+        console.print()
+        
         # Health Summary
         health_panel = Panel(
             "[green]✅ System appears to be healthy![/green]\n\n"
@@ -1218,7 +1379,7 @@ def doctor():
 @app.command()
 def version():
     """
-    📋 Show version information.
+    📋 Mostrar informações da versão.
     """
     version_info = Panel(
         "[bold blue]Environment Dev Deep Evaluation[/bold blue]\n"

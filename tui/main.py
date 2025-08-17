@@ -36,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.config import ConfigurationManager
 from detection.unified_engine import UnifiedDetectionEngine
 from core.exceptions import EnvironmentDevDeepEvaluationError
+from tui.installation_progress import InstallationProgressScreen
 
 
 class ComponentsScreen(Screen):
@@ -102,19 +103,24 @@ class ComponentsScreen(Screen):
                 self.notify(f"Error loading {yaml_file}: {e}", severity="warning")
     
     def setup_table(self) -> None:
-        """Setup the components table."""
+        """Setup the components table with real status from UnifiedDetectionEngine."""
         table = self.query_one("#components-table", DataTable)
         table.add_columns("Name", "Category", "Version", "Status", "Confiança")
         table.clear()
         
-        # Try to enrich with detection confidence from registry
+        # Try to enrich with detection confidence and status from registry
         confidence_index = {}
+        installed_components = set()
         try:
             engine = UnifiedDetectionEngine(ConfigurationManager())
             engine.initialize()
-            registry_apps = engine.scan_registry_installations()
-            confidence_index = {app.name.lower(): getattr(app.detection_confidence, 'value', 'unknown') for app in registry_apps}
-        except Exception:
+            # Analyze environment gaps to get real status
+            expected_names = list(self.components_data.keys())
+            gap_report = engine.analyze_environment_gaps(expected_names)
+            installed_components = {name.lower() for name in gap_report.present}
+            confidence_index = gap_report.confidence_index or {}
+        except Exception as e:
+            self.notify(f"Error getting component status: {e}", severity="warning")
             confidence_index = {}
 
         def _format_confidence(value: str) -> str:
@@ -126,27 +132,39 @@ class ComponentsScreen(Screen):
             }
             return mapping.get((value or "").lower(), mapping["unknown"])
 
+        def _format_status(is_installed: bool) -> str:
+            return "[green]✅ Installed[/green]" if is_installed else "[yellow]🟡 Available[/yellow]"
+
         for name, data in self.components_data.items():
             if isinstance(data, dict):
-                status = "🟡 Available"  # Mock status
-                # naive name match for confidence
                 comp_lower = name.lower()
-                confidence = "unknown"
-                if comp_lower in confidence_index:
-                    confidence = confidence_index[comp_lower]
+                is_installed = comp_lower in installed_components
+                status = _format_status(is_installed)
+                
+                # Get confidence value
+                confidence_obj = confidence_index.get(comp_lower)
+                confidence_value = "unknown"
+                if confidence_obj:
+                    confidence_value = getattr(confidence_obj, 'value', 'unknown') if hasattr(confidence_obj, 'value') else str(confidence_obj)
                 else:
-                    # try contains match
-                    for reg_name, conf in confidence_index.items():
-                        if comp_lower in reg_name or reg_name in comp_lower:
-                            confidence = conf
-                            break
+                    # Fallback to registry scan
+                    try:
+                        engine = UnifiedDetectionEngine(ConfigurationManager())
+                        engine.initialize()
+                        registry_apps = engine.scan_registry_installations()
+                        for app in registry_apps:
+                            if app.name.lower() == comp_lower or comp_lower in app.name.lower() or app.name.lower() in comp_lower:
+                                confidence_value = getattr(app.detection_confidence, 'value', 'unknown')
+                                break
+                    except Exception:
+                        pass
 
                 table.add_row(
                     name,
                     data.get('category', 'Unknown'),
                     data.get('version', 'Unknown'),
                     status,
-                    _format_confidence(confidence),
+                    _format_confidence(confidence_value),
                     key=name
                 )
         table.cursor_type = "row"
@@ -229,36 +247,76 @@ class ComponentsScreen(Screen):
             self.filter_components(event.value)
     
     def filter_components(self, query: str) -> None:
-        """Filter components based on search query."""
+        """Filter components based on search query with real status."""
         table = self.query_one("#components-table", DataTable)
         table.clear()
         
         query_lower = query.lower()
         
+        # Try to enrich with detection confidence and status from registry
+        confidence_index = {}
+        installed_components = set()
+        try:
+            engine = UnifiedDetectionEngine(ConfigurationManager())
+            engine.initialize()
+            # Analyze environment gaps to get real status
+            expected_names = [name for name, data in self.components_data.items() 
+                             if isinstance(data, dict) and 
+                             (query_lower in name.lower() or query_lower in data.get('description', '').lower())]
+            if expected_names:
+                gap_report = engine.analyze_environment_gaps(expected_names)
+                installed_components = {name.lower() for name in gap_report.present}
+                confidence_index = gap_report.confidence_index or {}
+        except Exception as e:
+            self.notify(f"Error getting component status: {e}", severity="warning")
+            confidence_index = {}
+
+        def _format_confidence(value: str) -> str:
+            mapping = {
+                "high": "[green]✅ alta[/green]",
+                "medium": "[yellow]🟡 média[/yellow]",
+                "low": "[red]⚠️ baixa[/red]",
+                "unknown": "[dim]❔ desconhecida[/dim]",
+            }
+            return mapping.get((value or "").lower(), mapping["unknown"])
+
+        def _format_status(is_installed: bool) -> str:
+            return "[green]✅ Installed[/green]" if is_installed else "[yellow]🟡 Available[/yellow]"
+
         for name, data in self.components_data.items():
             if isinstance(data, dict):
                 # Search in name and description
                 if (query_lower in name.lower() or 
                     query_lower in data.get('description', '').lower()):
                     
-                    status = "🟡 Available"  # Mock status
-                    # naive name match for confidence during filter as well
                     comp_lower = name.lower()
-                    confidence = "unknown"
-                    if comp_lower in confidence_index:
-                        confidence = confidence_index[comp_lower]
+                    is_installed = comp_lower in installed_components
+                    status = _format_status(is_installed)
+                    
+                    # Get confidence value
+                    confidence_obj = confidence_index.get(comp_lower)
+                    confidence_value = "unknown"
+                    if confidence_obj:
+                        confidence_value = getattr(confidence_obj, 'value', 'unknown') if hasattr(confidence_obj, 'value') else str(confidence_obj)
                     else:
-                        for reg_name, conf in confidence_index.items():
-                            if comp_lower in reg_name or reg_name in comp_lower:
-                                confidence = conf
-                                break
+                        # Fallback to registry scan
+                        try:
+                            engine = UnifiedDetectionEngine(ConfigurationManager())
+                            engine.initialize()
+                            registry_apps = engine.scan_registry_installations()
+                            for app in registry_apps:
+                                if app.name.lower() == comp_lower or comp_lower in app.name.lower() or app.name.lower() in comp_lower:
+                                    confidence_value = getattr(app.detection_confidence, 'value', 'unknown')
+                                    break
+                        except Exception:
+                            pass
 
                     table.add_row(
                         name,
                         data.get('category', 'Unknown'),
                         data.get('version', 'Unknown'),
                         status,
-                        confidence,
+                        _format_confidence(confidence_value),
                         key=name
                     )
         table.cursor_type = "row"
@@ -269,26 +327,30 @@ class ComponentsScreen(Screen):
         self.setup_table()
         self.notify("Components refreshed", severity="information")
     
-    def action_install(self) -> None:
-        """Install selected component."""
+    async def action_install(self) -> None:
+        """Install selected component asynchronously."""
         if not self.selected_component:
             self.notify("Please select a component to install", severity="warning")
             return
         
-        # Disparar CLI real com RF005 (instalação com verificação de hash)
+        # Criar uma nova tela de progresso
+        progress_screen = InstallationProgressScreen([self.selected_component])
+        await self.app.push_screen(progress_screen)
+        
+        # Executar a instalação
         try:
-            from subprocess import run
-            proc = run([sys.executable, "-m", "cli.main", "install", self.selected_component], capture_output=True, text=True)
-            if proc.returncode == 0:
+            success = await progress_screen.run_installation()
+            if success:
                 self.notify(f"Installed {self.selected_component}", severity="information")
+                # Atualizar a tabela de componentes
+                self.setup_table()
             else:
-                msg = proc.stderr or proc.stdout or "Erro desconhecido"
-                self.notify(f"Falha ao instalar {self.selected_component}: {msg}", severity="error")
+                self.notify(f"Installation failed for {self.selected_component}", severity="error")
         except Exception as e:
-            self.notify(f"Erro ao executar instalação: {e}", severity="error")
+            self.notify(f"Error during installation: {e}", severity="error")
 
-    def action_install_filtered(self) -> None:
-        """Install all components currently displayed (filtered list) via install-many."""
+    async def action_install_filtered(self) -> None:
+        """Install all components currently displayed (filtered list) via install-many asynchronously."""
         try:
             table = self.query_one("#components-table", DataTable)
             # Coleta de nomes exibidos (ordem atual)
@@ -302,16 +364,22 @@ class ComponentsScreen(Screen):
                 self.notify("Nenhum componente visível para instalar", severity="warning")
                 return
             self.notify(f"Instalando {len(names)} componentes filtrados...", severity="information")
-            from subprocess import run
-            # Chama install-many com --continue
-            cmd = [sys.executable, "-m", "cli.main", "install-many", *names, "--continue"]
-            # Execução síncrona simples; Textual suporta background com threads, mas mantemos curto
-            proc = run(cmd, capture_output=True, text=True)
-            if proc.returncode == 0:
-                self.notify("Instalação múltipla concluída", severity="information")
-            else:
-                msg = proc.stderr or proc.stdout or "Erro desconhecido"
-                self.notify(f"Falhas na instalação múltipla: {msg}", severity="error")
+            
+            # Criar uma nova tela de progresso
+            progress_screen = InstallationProgressScreen(names)
+            await self.app.push_screen(progress_screen)
+            
+            # Executar a instalação
+            try:
+                success = await progress_screen.run_installation()
+                if success:
+                    self.notify("Instalação múltipla concluída", severity="information")
+                    # Atualizar a tabela de componentes
+                    self.setup_table()
+                else:
+                    self.notify("Instalação múltipla falhou", severity="error")
+            except Exception as e:
+                self.notify(f"Error during installation: {e}", severity="error")
         except Exception as e:
             self.notify(f"Erro em instalação múltipla: {e}", severity="error")
     
@@ -477,7 +545,23 @@ class SettingsScreen(Screen):
             base_dir_input = self.query_one("#base-dir-input", Input)
             downloads_dir_input = self.query_one("#downloads-dir-input", Input)
             
-            # Mock save operation
+            # Get current configuration
+            config_manager = ConfigurationManager()
+            config = config_manager.get_config()
+            
+            # Update configuration values
+            updates = {
+                "debug_mode": debug_switch.value,
+                "base_directory": base_dir_input.value,
+                "downloads_directory": downloads_dir_input.value
+            }
+            
+            # Apply updates
+            config_manager.update(updates)
+            
+            # Save to file
+            config_manager.save_to_file("config/environment_dev_deep_evaluation.yaml")
+            
             self.notify("Settings saved successfully", severity="information")
             
         except Exception as e:

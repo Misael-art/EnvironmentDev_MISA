@@ -342,165 +342,165 @@ RadioButton {
 
 /* Button variants */
 Button.primary {
-    background: blue;
-    color: white;
+    background: $primary;
+    color: $text-primary;
 }
 
 Button.primary:hover {
-    background: lightblue;
+    background: $primary-lighten-1;
 }
 
 Button.default {
-    background: gray;
-    color: white;
-    border: solid white;
+    background: $surface;
+    color: $text;
+    border: solid $border;
 }
 
 Button.default:hover {
-    background: lightgray;
+    background: $surface-lighten-1;
 }
 
 Button.error {
-    background: red;
-    color: white;
+    background: $error;
+    color: $text-primary;
 }
 
 Button.error:hover {
-    background: lightcoral;
+    background: $error-lighten-1;
 }
 
 /* DataTable styles */
 DataTable {
-    background: black;
-    border: solid gray;
+    background: $surface;
+    border: solid $border;
 }
 
 DataTable > .datatable--header {
-    background: blue;
-    color: white;
+    background: $primary;
+    color: $text-primary;
     text-style: bold;
 }
 
 DataTable > .datatable--cursor {
-    background: gray;
-    color: white;
+    background: $surface-lighten-1;
+    color: $text;
 }
 
 DataTable:focus > .datatable--cursor {
-    background: lightblue;
+    background: $primary-lighten-1;
 }
 
 /* Input styles */
 Input {
-    background: black;
-    border: solid gray;
-    color: white;
+    background: $surface;
+    border: solid $border;
+    color: $text;
 }
 
 Input:focus {
-    border: solid blue;
+    border: solid $primary;
 }
 
 Input.-invalid {
-    border: solid red;
+    border: solid $error;
 }
 
 /* Switch styles */
 Switch {
-    background: gray;
+    background: $surface-lighten-1;
 }
 
 Switch.-on {
-    background: green;
+    background: $primary;
 }
 
 Switch > .switch--slider {
-    background: black;
-    color: white;
+    background: $surface;
+    color: $text;
 }
 
 /* ScrollableContainer styles */
 ScrollableContainer {
-    scrollbar-background: gray;
-    scrollbar-color: blue;
-    scrollbar-corner-color: gray;
+    scrollbar-background: $surface;
+    scrollbar-color: $primary;
+    scrollbar-corner-color: $surface;
 }
 
 ScrollableContainer:focus {
-    scrollbar-background: lightgray;
-    scrollbar-color: lightblue;
+    scrollbar-background: $surface-lighten-1;
+    scrollbar-color: $primary-lighten-1;
 }
 
 /* Tree styles */
 Tree {
-    background: black;
-    color: white;
+    background: $surface;
+    color: $text;
 }
 
 Tree > .tree--guides {
-    color: gray;
+    color: $border;
 }
 
 Tree > .tree--guides-hover {
-    color: blue;
+    color: $primary;
 }
 
 Tree > .tree--guides-selected {
-    color: blue;
+    color: $primary;
     text-style: bold;
 }
 
 /* Log styles */
 Log {
-    background: black;
-    border: solid gray;
-    color: white;
+    background: $surface;
+    border: solid $border;
+    color: $text;
 }
 
 /* Progress bar styles */
 ProgressBar {
-    background: gray;
-    color: white;
+    background: $surface;
+    color: $text;
 }
 
 ProgressBar > .bar--bar {
-    background: blue;
+    background: $primary;
 }
 
 ProgressBar > .bar--percentage {
-    color: white;
+    color: $text;
     text-style: bold;
 }
 
 /* Container styles */
 Container {
-    background: black;
-    border: solid gray;
+    background: $surface;
+    border: solid $border;
 }
 
 Container.primary {
-    background: blue;
-    color: white;
+    background: $primary;
+    color: $text-primary;
 }
 
 Container.secondary {
-    background: gray;
-    color: white;
+    background: $surface-lighten-1;
+    color: $text;
 }
 
 Container.error {
-    background: red;
-    color: white;
+    background: $error;
+    color: $text-primary;
 }
 
 Container.warning {
-    background: yellow;
-    color: black;
+    background: $warning;
+    color: $text-primary;
 }
 
 Container.success {
-    background: green;
-    color: white;
+    background: $success;
+    color: $text-primary;
 }
 
 Vertical {
@@ -513,36 +513,36 @@ Horizontal {
 
 /* Static text styles */
 Static {
-    color: white;
+    color: $text;
 }
 
 Static.title {
     text-style: bold;
-    color: blue;
+    color: $primary;
 }
 
 Static.subtitle {
-    color: gray;
+    color: $text-muted;
 }
 
 Static.primary {
-    color: blue;
+    color: $primary;
 }
 
 Static.secondary {
-    color: gray;
+    color: $text-muted;
 }
 
 Static.success {
-    color: green;
+    color: $success;
 }
 
 Static.warning {
-    color: yellow;
+    color: $warning;
 }
 
 Static.error {
-    color: red;
+    color: $error;
 }
 
 /* Simple animations and transitions */
@@ -556,17 +556,17 @@ Static.error {
 
 /* Focus indicators */
 *:focus {
-    border: solid blue;
+    border: solid $primary;
 }
 
 Button:focus {
-    border: solid blue;
+    border: solid $primary;
     text-style: bold;
 }
 
 Input:focus {
-    border: solid blue;
-    background: gray;
+    border: solid $primary;
+    background: $surface-lighten-1;
 }
 
 /* Loading states */

@@ -1,10 +1,12 @@
-#!/usr/bin/env python3
 """
-CLI (Command Line Interface) module for Environment Dev Deep Evaluation.
+CLI package for Environment Dev Deep Evaluation.
 
-This module provides a user-friendly command-line interface using Typer and Rich
-for enhanced user experience with colored output, progress bars, and interactive prompts.
+This package provides command-line interface functionality
+for managing development environments.
 """
 
-__version__ = "1.0.0"
-__author__ = "Environment Dev Deep Evaluation Team"
+from .main import app as main_app
+from .commands import ComponentManager
+from .profiles import app as profiles_app
+
+__all__ = ["main_app", "ComponentManager", "profiles_app"]

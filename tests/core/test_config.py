@@ -32,7 +32,7 @@ class TestSystemConfiguration:
         assert config.hierarchical_detection_enabled is True
         
         # Download settings
-        assert config.download_timeout == 300
+        assert config.download_timeout == 3600
         assert config.max_download_retries == 3
         assert config.parallel_downloads_enabled is True
         assert config.hash_verification_required is True
