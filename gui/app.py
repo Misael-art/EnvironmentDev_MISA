@@ -3,7 +3,8 @@ Main application window and layout for the EnvironmentDev_MISA GUI.
 Defines the primary window structure, including menu/sidebar and central area.
 """
 
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QStackedWidget
+import sys
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QStackedWidget
 from PySide6.QtCore import Qt
 
 class EnvironmentDevMISAGUI(QMainWindow):
@@ -64,6 +65,7 @@ class EnvironmentDevMISAGUI(QMainWindow):
         self.main_content = QStackedWidget()
         
         # Create placeholder widgets for each view
+        # In a full implementation, these would be instances of the actual view classes
         self.dashboard_widget = QLabel("Dashboard View - Overview of the environment status will be shown here.")
         self.dashboard_widget.setAlignment(Qt.AlignCenter)
         self.components_widget = QLabel("Components View - Manage installed and available components here.")
@@ -95,3 +97,18 @@ class EnvironmentDevMISAGUI(QMainWindow):
         self.btn_diagnostics.clicked.connect(lambda: self.main_content.setCurrentIndex(3))
         self.btn_settings.clicked.connect(lambda: self.main_content.setCurrentIndex(4))
         self.btn_updates.clicked.connect(lambda: self.main_content.setCurrentIndex(5))
+        
+    @staticmethod
+    def create_app():
+        """
+        Static method to create the QApplication instance.
+        This helps manage the application lifecycle correctly.
+        """
+        # Check if an instance already exists to avoid creating multiple
+        app_instance = QApplication.instance()
+        if app_instance is None:
+            app_instance = QApplication(sys.argv)
+        # Set application properties like name, version, etc. here if needed
+        # app_instance.setApplicationName("EnvironmentDev MISA")
+        # app_instance.setApplicationVersion("0.1.0")
+        return app_instance
