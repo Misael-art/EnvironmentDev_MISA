@@ -193,10 +193,7 @@ class EnvironmentDevMISAGUI(QMainWindow):
         QMessageBox.about(
             self,
             "About EnvironmentDev MISA",
-            "EnvironmentDev MISA GUI
-Version 0.1.0
-
-A tool to manage and configure development environments."
+            "EnvironmentDev MISA GUI\nVersion 0.1.0\n\nA tool to manage and configure development environments."
         )
 
     def toggle_theme(self):
