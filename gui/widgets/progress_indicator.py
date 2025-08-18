@@ -5,8 +5,12 @@ This widget provides a visual indication of an ongoing process.
 It can be a simple animated spinner or a more detailed progress bar.
 """
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar
+import logging
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QProgressBar, QHBoxLayout, QPushButton
 from PySide6.QtCore import Qt, QTimer
+
+# Logger for this module
+logger = logging.getLogger(__name__)
 
 class ProgressIndicator(QWidget):
     """
@@ -23,6 +27,7 @@ class ProgressIndicator(QWidget):
             parent (QWidget, optional): The parent widget. Defaults to None.
         """
         super().__init__(parent)
+        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.label_text = label_text
         self.init_ui()
 
@@ -30,6 +35,7 @@ class ProgressIndicator(QWidget):
         """Initialize the user interface."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(5)
 
         self.label = QLabel(self.label_text)
         self.label.setAlignment(Qt.AlignCenter)
@@ -42,6 +48,7 @@ class ProgressIndicator(QWidget):
         layout.addWidget(self.progress_bar)
 
         # Optional: Determinate progress bar (0-100%)
+        # Uncomment the lines below and comment the ones above to switch modes
         # self.progress_bar = QProgressBar()
         # self.progress_bar.setRange(0, 100)
         # self.progress_bar.setValue(0)
@@ -60,39 +67,32 @@ class ProgressIndicator(QWidget):
         """
         self.label.setText(text)
 
-    def set_determinate(self, is_determinate=True, max_value=100):
+    def start(self, label_text=None):
         """
-        Switch between indeterminate (spinner) and determinate (progress bar) mode.
+        Start the progress indication.
 
         Args:
-            is_determinate (bool): True for determinate mode, False for indeterminate.
-            max_value (int): The maximum value for the determinate progress bar.
+            label_text (str, optional): New label text to set before starting. Defaults to None.
         """
-        if is_determinate:
-            self.progress_bar.setRange(0, max_value)
-            self.progress_bar.setTextVisible(True)
-        else:
-            self.progress_bar.setRange(0, 0)
-            self.progress_bar.setTextVisible(False)
-
-    def set_value(self, value):
-        """
-        Set the value of the progress bar (only relevant in determinate mode).
-
-        Args:
-            value (int): The progress value.
-        """
-        if self.progress_bar.minimum() != self.progress_bar.maximum(): # Determinate mode
-            self.progress_bar.setValue(value)
-
-    def start(self):
-        """Start the progress indication."""
+        if label_text:
+            self.set_label_text(label_text)
+        self.logger.debug(f"Starting progress indicator with label: '{self.label.text()}'")
         self.setVisible(True)
         # If using a timer for animation in a custom spinner, start it here
         # self.timer.start(100) # Example for a 100ms timer
 
     def stop(self):
         """Stop the progress indication."""
+        self.logger.debug("Stopping progress indicator.")
         self.setVisible(False)
         # If using a timer, stop it here
         # self.timer.stop()
+        
+    def is_running(self):
+        """
+        Check if the progress indicator is currently visible/running.
+
+        Returns:
+            bool: True if the indicator is visible, False otherwise.
+        """
+        return self.isVisible()
