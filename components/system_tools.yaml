@@ -31,7 +31,7 @@ CrystalDiskInfo:
 Fan Control:
   category: System Tools
   description: Controle avançado de ventoinhas do sistema
-  download_url: https://github.com/Rem0o/FanControl.Releases/releases/latest/download/FanControl.zip
+  download_url: https://github.com/Rem0o/FanControl.Releases/releases/download/V170/FanControl.zip
   extract_path: C:\Program Files\FanControl
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
@@ -44,7 +44,7 @@ Fan Control:
 GPU-Z:
   category: System Tools
   description: Utilitário de informações detalhadas da placa de vídeo
-  download_url: https://ftp.techpowerup.com/gpuz/GPU-Z.2.55.0.exe
+  download_url: https://www.techpowerup.com/download/techpowerup-gpu-z/GPU-Z.2.68.0.exe
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
   install_args: /S
@@ -74,10 +74,11 @@ HWiNFO64:
 Performance Overlay:
   category: System Tools
   description: Overlay de monitoramento de performance do sistema
-  download_url: https://github.com/SteamDeckHomebrew/PerformanceOverlay/releases/latest/download/PerformanceOverlay.exe
-  hash: HASH_PENDENTE_VERIFICACAO
+  download_url: UNAVAILABLE
+  hash: UNAVAILABLE
   hash_algorithm: sha256
-  install_method: portable
+  install_method: none
+  post_install_message: Performance Overlay is no longer available for direct download. You may need to find an alternative source or build it from source.
   verify_actions:
   - path: C:\Program Files\SteamDeckTools\PerformanceOverlay.exe
     type: file_exists
@@ -86,8 +87,16 @@ Performance Overlay:
 Power Control:
   category: System Tools
   description: Ferramenta de controle de energia e performance
-  download_url: https://github.com/SteamDeckHomebrew/PowerControl/releases/latest/download/PowerControl.exe
-  hash: HASH_PENDENTE_VERIFICACAO
+  download_url: UNAVAILABLE
+  hash: UNAVAILABLE
+  hash_algorithm: sha256
+  install_method: none
+  post_install_message: Power Control is no longer available for direct download. You may need to find an alternative source or build it from source.
+  verify_actions:
+  - path: C:\Program Files\SteamDeckTools\PowerControl.exe
+    type: file_exists
+  - path: C:\Users\{username}\AppData\Local\PowerControl\PowerControl.exe
+    type: file_exists
   hash_algorithm: sha256
   install_method: portable
   verify_actions:

@@ -14,7 +14,7 @@ Clang:
   category: Compilers
   dependencies: []
   description: Compilador Clang/LLVM para Windows
-  download_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-17.0.6/LLVM-17.0.6-win64.exe
+  download_url: https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.6/LLVM-18.1.6-win64.exe
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
   install_args: /S

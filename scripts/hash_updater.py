@@ -50,7 +50,7 @@ class HashUpdater(SystemComponentBase):
         self._config_manager = config_manager
         self._session = requests.Session()
         self._session.headers.update({
-            'User-Agent': 'Environment-Dev-Deep-Evaluation-Hash-Updater/1.0'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
         })
         
         # Statistics tracking

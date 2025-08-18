@@ -14,12 +14,13 @@ Citra (Windows):
   dependencies:
   - 7-Zip
   description: Emulador de Nintendo 3DS para Windows
-  download_url: https://github.com/PabloMK7/citra/releases/latest/download/citra-windows-msvc.zip
+  download_url: UNAVAILABLE
   extract_path: ${env:ProgramFiles}\Citra
-  hash: HASH_NEEDS_UPDATE
+  hash: UNAVAILABLE
   hash_algorithm: sha256
-  install_method: archive
+  install_method: none
   notes: Projeto original descontinuado, usando fork do PabloMK7
+  post_install_message: Citra (Windows) is no longer officially available due to legal action. You may be able to find unofficial builds online, but proceed with caution.
   verify_actions:
   - path: ${env:ProgramFiles}\Citra\citra-qt.exe
     type: file_exists
@@ -121,7 +122,7 @@ Mesen:
   - 7-Zip
   description: Emulador de NES/Famicom, SNES/Super Famicom, Game Boy, PC Engine de
     alta precisão
-  download_url: https://github.com/SourMesen/Mesen2/releases/latest/download/Mesen-Windows.zip
+  download_url: https://github.com/SourMesen/Mesen2/releases/download/2.1.1/Mesen-Windows.zip
   extract_path: ${env:ProgramFiles}\Mesen
   hash: HASH_NEEDS_UPDATE
   hash_algorithm: sha256
@@ -134,9 +135,9 @@ PCSX2 (Windows):
   dependencies:
   - 7-Zip
   description: Emulador de PlayStation 2 para Windows
-  download_url: https://github.com/PCSX2/pcsx2/releases/latest/download/pcsx2-v2.0.2-windows-x64-Qt.7z
+  download_url: https://github.com/PCSX2/pcsx2/releases/download/v1.6.0/pcsx2-1.6.0-windows-x64-Qt.7z
   extract_path: ${env:ProgramFiles}\PCSX2
-  hash: HASH_NEEDS_UPDATE
+  hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
   install_method: archive
   verify_actions:
@@ -147,7 +148,7 @@ RPCS3 (Windows):
   dependencies:
   - 7-Zip
   description: Emulador de PlayStation 3 para Windows
-  download_url: https://github.com/RPCS3/rpcs3-binaries-win/releases/latest/download/rpcs3-v0.0.32-16445-4d5ff071_win64.7z
+  download_url: https://github.com/RPCS3/rpcs3-binaries-win/releases/download/0.0.37-18106/rpcs3-v0.0.37-18106_win64.7z
   extract_path: ${env:ProgramFiles}\RPCS3
   hash: HASH_NEEDS_UPDATE
   hash_algorithm: sha256
@@ -173,7 +174,7 @@ VBA-M (VisualBoyAdvance-M):
   dependencies:
   - 7-Zip
   description: Emulador de Game Boy / Color / Advance
-  download_url: https://github.com/visualboyadvance-m/visualboyadvance-m/releases/latest/download/visualboyadvance-m-Win-x64.zip
+  download_url: https://github.com/visualboyadvance-m/visualboyadvance-m/releases/download/v2.1.6/visualboyadvance-m-Win-x64.zip
   extract_path: ${env:ProgramFiles}\VBA-M
   hash: HASH_NEEDS_UPDATE
   hash_algorithm: sha256
@@ -186,12 +187,13 @@ Yuzu (Windows):
   dependencies:
   - 7-Zip
   description: Emulador de Nintendo Switch para Windows
-  download_url: https://github.com/suyu-emu/suyu/releases/latest/download/suyu-windows-msvc.zip
+  download_url: UNAVAILABLE
   extract_path: ${env:ProgramFiles}\Yuzu
-  hash: HASH_NEEDS_UPDATE
+  hash: UNAVAILABLE
   hash_algorithm: sha256
-  install_method: archive
+  install_method: none
   notes: Projeto original descontinuado, usando fork Suyu
+  post_install_message: Yuzu (Windows) is no longer officially available due to legal action. You may be able to find unofficial builds online, but proceed with caution.
   verify_actions:
   - path: ${env:ProgramFiles}\Yuzu\yuzu.exe
     type: file_exists
@@ -200,7 +202,7 @@ mGBA:
   dependencies:
   - 7-Zip
   description: Emulador de Game Boy Advance rápido e preciso
-  download_url: https://github.com/mgba-emu/mgba/releases/latest/download/mGBA-0.11.1-win64.7z
+  download_url: https://github.com/mgba-emu/mgba/releases/download/0.11.1/mGBA-0.11.1-win64.7z
   extract_path: ${env:ProgramFiles}\mGBA
   hash: HASH_NEEDS_UPDATE
   hash_algorithm: sha256

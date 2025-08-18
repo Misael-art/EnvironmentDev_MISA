@@ -3,11 +3,11 @@ Cursor IDE:
   - https://cursor.sh/download
   category: Editors
   description: IDE focado em IA, fork do VSCode
-  download_url: https://download.cursor.sh/windows/nsis/x64
-  hash: HASH_NEEDS_UPDATE
+  download_url: https://cursor.sh/downloads
+  hash: MANUAL_INSTALL_REQUIRED
   hash_algorithm: sha256
-  install_args: /S
-  install_method: exe
+  install_method: none
+  post_install_message: Cursor IDE must be downloaded and installed manually from https://cursor.sh/downloads
   verify_actions:
   - path: ${env:LOCALAPPDATA}\Programs\Cursor\Cursor.exe
     type: file_exists

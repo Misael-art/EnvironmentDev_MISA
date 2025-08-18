@@ -1,11 +1,11 @@
 Game Fire:
   category: Optimization (Windows)
   description: Otimizador de jogos que desativa serviços e processos desnecessários
-  download_url: https://www.smartpcutilities.com/files/gamefire_setup.exe
-  hash: HASH_PENDENTE_VERIFICACAO
+  download_url: https://www.smartpcutilities.com/
+  hash: MANUAL_INSTALL_REQUIRED
   hash_algorithm: sha256
-  install_args: /S
-  install_method: exe
+  install_method: none
+  post_install_message: Game Fire must be downloaded and installed manually from https://www.smartpcutilities.com/
   verify_actions:
   - path: C:\Program Files (x86)\SmartPCUtilities\Game Fire 6\GameFire.exe
     type: file_exists

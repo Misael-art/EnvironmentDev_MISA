@@ -16,11 +16,11 @@ Blender:
 NVIDIA Game Ready Driver:
   category: Graphics
   description: Driver NVIDIA otimizado para jogos
-  download_url: https://us.download.nvidia.com/Windows/546.33/546.33-desktop-win10-win11-64bit-international-dch-whql.exe
-  hash: HASH_PENDENTE_VERIFICACAO
+  download_url: https://www.nvidia.com/Download/index.aspx
+  hash: MANUAL_DOWNLOAD
   hash_algorithm: sha256
   install_args: -s -noreboot
-  install_method: exe
+  install_method: manual
   verify_actions:
   - path: C:\Program Files\NVIDIA Corporation\NVSMI\nvidia-smi.exe
     type: file_exists

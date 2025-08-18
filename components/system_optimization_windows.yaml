@@ -15,7 +15,7 @@ Optimizer:
   category: System Optimization (Windows)
   description: Utilitário leve para ajustes de privacidade e desempenho do Windows
   download_dir: ${env:USERPROFILE}\Downloads\Optimizer
-  download_url: https://github.com/hellzerg/optimizer/releases/latest/download/Optimizer-16.9.exe
+  download_url: https://github.com/hellzerg/optimizer/releases/download/16.9/Optimizer.exe
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
   install_method: download

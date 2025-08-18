@@ -1,532 +1,532 @@
-# Retro Development Kits para Environment Dev Script
-# Este arquivo contém componentes relacionados a desenvolvimento retro
-
-GBDK (Game Boy Development Kit):
-  category: Retro Development
-  description: Kit de desenvolvimento para Game Boy e Game Boy Color
-  download_url: https://github.com/gbdk-2020/gbdk-2020/releases/latest/download/gbdk-win.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_gbdk
+Ares:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_ares
+  description: Emulador multi-sistema de alta precisão (inclui N64)
+  download_url: https://github.com/ares-emulator/ares/releases/download/v145/ares-windows.zip
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'retro_devkits\gbdk\bin\lcc.exe'
-    - type: file_exists
-      path: 'retro_devkits\gbdk\include\gb\gb.h'
-  dependencies:
-    - "Microsoft Visual C++ Redistributable"
-  emulators:
-    - "BGB"
-    - "SameBoy"
-  extensions:
-    - "ms-vscode.cpptools"
-    - "webfreak.debug"
-    - "ms-vscode.hexeditor"
-
-SNES Development Kit (CC65):
-  category: Retro Development
-  description: Kit de desenvolvimento para Super Nintendo usando CC65
-  download_url: https://github.com/cc65/cc65/releases/latest/download/cc65-snapshot-win32.zip
   install_method: custom
-  custom_installer: retro_devkit_manager.install_snes
+  verify_actions:
+  - path: emulators\ares\ares.exe
+    type: file_exists
+BGB:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_bgb
+  description: Emulador Game Boy com recursos de debugging
+  download_url: https://bgb.bircd.org/bgb.zip
+  hash: 975becaef2cdd0557be146314baf2462e922eb322f4744b891d0f59cd389ecba
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\bgb\bgb.exe
+    type: file_exists
+BlastEm:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_blastem
+  description: Emulador Sega Genesis/Mega Drive de alta precisão
+  download_url: https://www.retrodev.com/blastem/blastem-0.6.2-windows.zip
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'retro_devkits\snes\cc65\bin\cc65.exe'
-    - type: file_exists
-      path: 'retro_devkits\snes\cc65\include\snes.h'
-  dependencies:
-    - "Microsoft Visual C++ Redistributable"
-  emulators:
-    - "bsnes"
-    - "Snes9x"
-  extensions:
-    - "ms-vscode.cpptools"
-    - "13xforever.language-x86-64-assembly"
-
-PSX Development Kit (PSn00bSDK):
-  category: Retro Development
-  description: Kit de desenvolvimento para PlayStation 1
-  download_url: https://github.com/Lameguy64/PSn00bSDK/releases/latest/download/psn00bsdk-win32.zip
   install_method: custom
-  custom_installer: retro_devkit_manager.install_psx
+  verify_actions:
+  - path: emulators\blastem\blastem.exe
+    type: file_exists
+DuckStation:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_duckstation
+  description: Emulador PlayStation 1 de alta precisão
+  download_url: https://github.com/stenzek/duckstation/releases/latest/download/duckstation-windows-x64-release.zip
+  hash: 6316aae9be8f35d469e9c044d53cc1868515a394a288e1790760b4dfb82b66d0
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\duckstation\duckstation-qt-x64-ReleaseLTCG.exe
+    type: file_exists
+FCEUX:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_fceux
+  description: Emulador NES com recursos de debugging
+  download_url: https://github.com/TASEmulators/fceux/releases/download/v2.6.6/fceux-win32.zip
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'retro_devkits\psx\psn00bsdk\bin\mipsel-none-elf-gcc.exe'
-    - type: file_exists
-      path: 'retro_devkits\psx\psn00bsdk\include\psxgpu.h'
-  dependencies:
-    - "Microsoft Visual C++ Redistributable"
-  emulators:
-    - "DuckStation"
-    - "PCSX-Redux"
-  extensions:
-    - "ms-vscode.cpptools"
-    - "webfreak.debug"
-
-N64 Development Kit (libdragon):
-  category: Retro Development
-  description: Kit de desenvolvimento para Nintendo 64
-  download_url: https://github.com/DragonMinded/libdragon/releases/latest/download/libdragon-win64.zip
   install_method: custom
-  custom_installer: retro_devkit_manager.install_n64
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
   verify_actions:
-    - type: file_exists
-      path: 'retro_devkits\n64\libdragon\bin\mips64-elf-gcc.exe'
-    - type: file_exists
-      path: 'retro_devkits\n64\libdragon\include\libdragon.h'
-  dependencies:
-    - "Microsoft Visual C++ Redistributable"
-  emulators:
-    - "Ares"
-    - "Mupen64Plus"
-    - "Project64"
-  extensions:
-    - "ms-vscode.cpptools"
-    - "13xforever.language-x86-64-assembly"
-
+  - path: emulators\fceux\fceux.exe
+    type: file_exists
+Fusion:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_fusion
+  description: Emulador Sega Genesis/Mega Drive de alta compatibilidade
+  download_url: https://www.carpeludum.com/download/fusion364.zip
+  hash: 6365101eb417c5c2a5e6609573f354b7b7ea86632cbfd968676a1eec070e0ca3
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\fusion\Fusion.exe
+    type: file_exists
 GBA Development Kit (devkitARM):
   category: Retro Development
-  description: Kit de desenvolvimento para Game Boy Advance
-  download_url: https://github.com/devkitPro/installer/releases/latest/download/devkitProUpdater-3.0.4.exe
-  install_method: custom
   custom_installer: retro_devkit_manager.install_gba
+  dependencies:
+  - Microsoft Visual C++ Redistributable
+  description: Kit de desenvolvimento para Game Boy Advance
+  download_url: https://github.com/devkitPro/installer/releases/download/v3.0.4/devkitProUpdater-3.0.4.exe
+  emulators:
+  - mGBA
+  - VBA-M
+  - No$GBA
+  extensions:
+  - ms-vscode.cpptools
+  - 13xforever.language-x86-64-assembly
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'retro_devkits\gba\devkitARM\bin\arm-none-eabi-gcc.exe'
-    - type: file_exists
-      path: 'retro_devkits\gba\libgba\include\gba.h'
-  dependencies:
-    - "Microsoft Visual C++ Redistributable"
-  emulators:
-    - "mGBA"
-    - "VBA-M"
-    - "No$GBA"
-  extensions:
-    - "ms-vscode.cpptools"
-    - "13xforever.language-x86-64-assembly"
-
-Neo Geo Development Kit (NGDevKit):
-  category: Retro Development
-  description: Kit de desenvolvimento para Neo Geo
-  download_url: https://github.com/dciabrin/ngdevkit/releases/latest/download/ngdevkit-win64.zip
   install_method: custom
-  custom_installer: retro_devkit_manager.install_neogeo
+  verify_actions:
+  - path: retro_devkits\gba\devkitARM\bin\arm-none-eabi-gcc.exe
+    type: file_exists
+  - path: retro_devkits\gba\libgba\include\gba.h
+    type: file_exists
+GBDK (Game Boy Development Kit):
+  category: Retro Development
+  custom_installer: retro_devkit_manager.install_gbdk
+  dependencies:
+  - Microsoft Visual C++ Redistributable
+  description: Kit de desenvolvimento para Game Boy e Game Boy Color
+  download_url: https://github.com/gbdk-2020/gbdk-2020/releases/download/4.4.0/gbdk-win.zip
+  emulators:
+  - BGB
+  - SameBoy
+  extensions:
+  - ms-vscode.cpptools
+  - webfreak.debug
+  - ms-vscode.hexeditor
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
+  install_method: custom
   verify_actions:
-    - type: file_exists
-      path: 'retro_devkits\neogeo\toolchain\bin\m68k-neogeo-elf-gcc.exe'
-    - type: file_exists
-      path: 'retro_devkits\neogeo\ngdevkit\include\neogeo.h'
+  - path: retro_devkits\gbdk\bin\lcc.exe
+    type: file_exists
+  - path: retro_devkits\gbdk\include\gb\gb.h
+    type: file_exists
+Gens:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_gens
+  description: Emulador Sega Genesis/Mega Drive clássico
+  download_url: https://sourceforge.net/projects/gens/
+  hash: MANUAL_INSTALL_REQUIRED
+  hash_algorithm: sha256
+  install_method: none
+  post_install_message: Gens must be downloaded and installed manually from https://sourceforge.net/projects/gens/
+  verify_actions:
+  - path: emulators\gens\gens.exe
+    type: file_exists
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\gens\gens.exe
+    type: file_exists
+Kronos:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_kronos
+  description: Emulador Sega Saturn moderno
+  download_url: https://github.com/FCare/Kronos/releases/download/2.7.0/kronos_windows.zip
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\kronos\kronos.exe
+    type: file_exists
+MAME:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_mame
+  description: Emulador arcade multi-sistema (inclui Neo Geo)
+  download_url: https://github.com/mamedev/mame/releases/download/mame0279/mame0279b_64bit.exe
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\mame\mame.exe
+    type: file_exists
+Mednafen:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_mednafen
+  description: Emulador multi-sistema de alta precisão (inclui Saturn)
+  download_url: https://mednafen.github.io/releases/files/mednafen-1.32.1-win64.zip
+  hash: 3b680ce6b50a17bcbb2ac611e38962ee469e399b412cc435ffacd6e7f6fb1982
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\mednafen\mednafen.exe
+    type: file_exists
+Mesen:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_mesen
+  description: Emulador NES/Famicom de alta precisão
+  download_url: https://github.com/SourMesen/Mesen/releases/download/0.9.9/Mesen.zip
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\mesen\Mesen.exe
+    type: file_exists
+Mupen64Plus:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_mupen64plus
+  description: Emulador Nintendo 64 de código aberto
+  download_url: https://github.com/mupen64plus/mupen64plus-core/releases/download/2.6.0/mupen64plus-bundle-win32.zip
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\mupen64plus\mupen64plus.exe
+    type: file_exists
+N64 Development Kit (libdragon):
+  category: Retro Development
+  custom_installer: retro_devkit_manager.install_n64
   dependencies:
-    - "Microsoft Visual C++ Redistributable"
+  - Microsoft Visual C++ Redistributable
+  description: Kit de desenvolvimento para Nintendo 64
+  download_url: https://github.com/DragonMinded/libdragon/releases/download/toolchain-continuous-prerelease/libdragon-win64.zip
   emulators:
-    - "MAME"
-    - "Nebula"
-    - "Kawaks"
+  - Ares
+  - Mupen64Plus
+  - Project64
   extensions:
-    - "ms-vscode.cpptools"
-    - "13xforever.language-x86-64-assembly"
+  - ms-vscode.cpptools
+  - 13xforever.language-x86-64-assembly
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: retro_devkits\n64\libdragon\bin\mips64-elf-gcc.exe
+    type: file_exists
+  - path: retro_devkits\n64\libdragon\include\libdragon.h
+    type: file_exists
 
 NES Development Kit (CC65):
   category: Retro Development
-  description: Kit de desenvolvimento para Nintendo Entertainment System
-  download_url: https://github.com/cc65/cc65/releases/latest/download/cc65-snapshot-win32.zip
-  install_method: custom
   custom_installer: retro_devkit_manager.install_nes
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'retro_devkits\nes\cc65\bin\cc65.exe'
-    - type: file_exists
-      path: 'retro_devkits\nes\neslib\neslib.h'
   dependencies:
-    - "Microsoft Visual C++ Redistributable"
+  - Microsoft Visual C++ Redistributable
+  description: Kit de desenvolvimento para Nintendo Entertainment System
+  download_url: https://github.com/cc65/cc65/releases/download/V2.19/cc65-snapshot-win32.zip
   emulators:
-    - "FCEUX"
-    - "Nestopia"
-    - "Mesen"
+  - FCEUX
+  - Nestopia
+  - Mesen
   extensions:
-    - "ms-vscode.cpptools"
-    - "13xforever.language-x86-64-assembly"
-
-SGDK (Sega Genesis Development Kit):
-  category: Retro Development
-  description: Kit de desenvolvimento para Sega Mega Drive / Genesis com detecção inteligente de editores
-  download_url: https://github.com/Stephane-D/SGDK/releases/latest/download/sgdk180.7z
-  install_method: custom
-  custom_installer: intelligent_sgdk_installer.install_sgdk  # Usar instalador inteligente
+  - ms-vscode.cpptools
+  - 13xforever.language-x86-64-assembly
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'retro_devkits\sgdk\bin\rescomp.jar'
-    - type: file_exists
-      path: 'retro_devkits\sgdk\inc\genesis.h'
-    - type: file_exists
-      path: 'retro_devkits\sgdk\bin\gcc\bin\m68k-elf-gcc.exe'
-  dependencies:
-    - "Microsoft Visual C++ Redistributable"
-    - "Java Runtime Environment"
-    - "Make"
-    # VSCode agora é instalado condicionalmente baseado na detecção de editores
-  conditional_dependencies:
-    # Dependências que são instaladas baseadas em condições específicas
-    editors:
-      condition: "no_compatible_editor_detected"
-      dependencies:
-        - "Visual Studio Code"
-      reason: "Nenhum editor compatível detectado. VSCode será instalado para suporte completo ao SGDK."
-  emulators:
-    - "Gens"
-    - "Fusion"
-    - "BlastEm"
-  # Extensões agora são gerenciadas pelo instalador inteligente
-  extensions_config:
-    vscode_compatible:
-      - "zerasul.genesis-code"  # Extensão principal Genesis Code
-      - "ms-vscode.cpptools"   # IntelliSense para C/C++
-      - "13xforever.language-x86-64-assembly"  # Assembly syntax highlighting
-      - "ms-vscode.hexeditor"  # Hex editor para ROMs
-    minimal:
-      - "zerasul.genesis-code"
-      - "ms-vscode.cpptools"
-  # Comandos pós-instalação agora são gerenciados pelo instalador inteligente
-  intelligent_install_features:
-    - "Detecção automática de editores compatíveis"
-    - "Instalação condicional do VSCode"
-    - "Configuração automática de extensões"
-    - "Suporte para múltiplos editores (VSCode, Cursor, TRAE, etc.)"
-    - "Configuração otimizada baseada no editor detectado"
-  supported_editors:
-    full_compatibility:
-      - "Visual Studio Code"
-      - "Visual Studio Code Insiders"
-      - "Cursor IDE"
-      - "TRAE AI IDE"
-      - "VSCodium"
-    partial_compatibility:
-      - "Sublime Text"
-      - "Atom"
-      - "Vim/Neovim"
-      - "Emacs"
-      - "Code::Blocks"
-    minimal_compatibility:
-      - "Notepad++"
-      - "UltraEdit"
-  notes: |
-    Este instalador usa detecção inteligente de editores para otimizar a experiência de desenvolvimento:
-    
-    🎯 DETECÇÃO AUTOMÁTICA:
-    - Verifica editores instalados no sistema
-    - Avalia compatibilidade com SGDK/Genesis Code
-    - Instala VSCode apenas se necessário
-    
-    🔧 CONFIGURAÇÃO INTELIGENTE:
-    - Configura automaticamente o melhor editor disponível
-    - Instala extensões apropriadas para cada editor
-    - Otimiza configurações baseadas na compatibilidade
-    
-    📦 INSTALAÇÃO CONDICIONAL:
-    - VSCode é instalado apenas se nenhum editor compatível for encontrado
-    - Editores parcialmente compatíveis recebem configuração manual
-    - Editores totalmente compatíveis são configurados automaticamente
-
-Sega Saturn Development Kit (Jo-Engine + Yaul):
-  category: Retro Development
-  description: Kit de desenvolvimento para Sega Saturn
-  download_url: https://github.com/johannes-fetz/joengine/releases/latest/download/joengine-win64.zip
   install_method: custom
-  custom_installer: retro_devkit_manager.install_saturn
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
   verify_actions:
-    - type: file_exists
-      path: 'retro_devkits\saturn\toolchain\bin\sh2-elf-gcc.exe'
-    - type: file_exists
-      path: 'retro_devkits\saturn\joengine\jo\jo.h'
+  - path: retro_devkits\nes\cc65\bin\cc65.exe
+    type: file_exists
+  - path: retro_devkits\nes\neslib\neslib.h
+    type: file_exists
+Neo Geo Development Kit (NGDevKit):
+  category: Retro Development
+  custom_installer: retro_devkit_manager.install_neogeo
   dependencies:
-    - "Microsoft Visual C++ Redistributable"
+  - Microsoft Visual C++ Redistributable
+  description: Kit de desenvolvimento para Neo Geo
+  download_url: UNAVAILABLE
   emulators:
-    - "Mednafen"
-    - "SSF"
-    - "Kronos"
+  - MAME
+  - Nebula
+  - Kawaks
   extensions:
-    - "ms-vscode.cpptools"
-    - "13xforever.language-x86-64-assembly"
-
-# Emuladores para desenvolvimento retro
-
-BGB:
-  category: Retro Emulators
-  description: Emulador Game Boy com recursos de debugging
-  download_url: https://bgb.bircd.org/bgb.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_bgb
-  hash: HASH_PENDENTE_VERIFICACAO
+  - ms-vscode.cpptools
+  - 13xforever.language-x86-64-assembly
+  hash: UNAVAILABLE
   hash_algorithm: sha256
+  install_method: none
+  post_install_message: Neo Geo Development Kit (NGDevKit) is no longer available for download from its official GitHub repository. You may need to find an alternative source or build it from source.
   verify_actions:
-    - type: file_exists
-      path: 'emulators\bgb\bgb.exe'
-
-SameBoy:
-  category: Retro Emulators
-  description: Emulador Game Boy de alta precisão
-  download_url: https://github.com/LIJI32/SameBoy/releases/latest/download/sameboy_winsdl.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_sameboy
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\sameboy\sameboy.exe'
-
-bsnes:
-  category: Retro Emulators
-  description: Emulador SNES de alta precisão
-  download_url: https://github.com/bsnes-emu/bsnes/releases/latest/download/bsnes-windows.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_bsnes
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\bsnes\bsnes.exe'
-
-Snes9x:
-  category: Retro Emulators
-  description: Emulador SNES rápido e compatível
-  download_url: https://github.com/snes9xgit/snes9x/releases/latest/download/snes9x-1.62.3-win32-x64.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_snes9x
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\snes9x\snes9x-x64.exe'
-
-DuckStation:
-  category: Retro Emulators
-  description: Emulador PlayStation 1 de alta precisão
-  download_url: https://github.com/stenzek/duckstation/releases/latest/download/duckstation-windows-x64-release.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_duckstation
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\duckstation\duckstation-qt-x64-ReleaseLTCG.exe'
-
-PCSX-Redux:
-  category: Retro Emulators
-  description: Emulador PlayStation 1 com foco em desenvolvimento
-  download_url: https://github.com/grumpycoders/pcsx-redux/releases/latest/download/PCSX-Redux-Windows-x86_64.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_pcsx_redux
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\pcsx-redux\pcsx-redux.exe'
-
-Ares:
-  category: Retro Emulators
-  description: Emulador multi-sistema de alta precisão (inclui N64)
-  download_url: https://github.com/ares-emulator/ares/releases/latest/download/ares-windows.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_ares
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\ares\ares.exe'
-
-Mupen64Plus:
-  category: Retro Emulators
-  description: Emulador Nintendo 64 de código aberto
-  download_url: https://github.com/mupen64plus/mupen64plus-core/releases/latest/download/mupen64plus-bundle-win32.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_mupen64plus
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\mupen64plus\mupen64plus.exe'
-
-Project64:
-  category: Retro Emulators
-  description: Emulador Nintendo 64 popular
-  download_url: https://www.pj64-emu.com/file/project64-latest/
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_project64
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\project64\Project64.exe'
-
-mGBA:
-  category: Retro Emulators
-  description: Emulador Game Boy Advance de alta precisão
-  download_url: https://github.com/mgba-emu/mgba/releases/latest/download/mgba-0.10.3-win64.7z
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_mgba
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\mgba\mgba.exe'
-
-VBA-M:
-  category: Retro Emulators
-  description: Emulador Game Boy Advance rápido
-  download_url: https://github.com/visualboyadvance-m/visualboyadvance-m/releases/latest/download/visualboyadvance-m-Win-x64.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_vba_m
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\vba-m\visualboyadvance-m.exe'
-
-No$GBA:
-  category: Retro Emulators
-  description: Emulador Game Boy Advance com debugging
-  download_url: https://problemkaputt.de/gba.htm
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_no_gba
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\no_gba\NO$GBA.EXE'
-
-MAME:
-  category: Retro Emulators
-  description: Emulador arcade multi-sistema (inclui Neo Geo)
-  download_url: https://github.com/mamedev/mame/releases/latest/download/mame0259b_64bit.exe
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_mame
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\mame\mame.exe'
-
-FCEUX:
-  category: Retro Emulators
-  description: Emulador NES com recursos de debugging
-  download_url: https://github.com/TASEmulators/fceux/releases/latest/download/fceux-win32.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_fceux
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\fceux\fceux.exe'
+  - path: retro_devkits\neogeo\toolchain\bin\m68k-neogeo-elf-gcc.exe
+    type: file_exists
+  - path: retro_devkits\neogeo\ngdevkit\include\neogeo.h
+    type: file_exists
 
 Nestopia:
   category: Retro Emulators
-  description: Emulador NES de alta precisão
-  download_url: https://github.com/0ldsk00l/nestopia/releases/latest/download/Nestopia-win64.zip
-  install_method: custom
   custom_installer: retro_devkit_manager.install_emulator_nestopia
+  description: Emulador NES de alta precisão
+  download_url: https://github.com/0ldsk00l/nestopia/releases/download/1.53.2/Nestopia-win64.zip
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
-  verify_actions:
-    - type: file_exists
-      path: 'emulators\nestopia\nestopia.exe'
-
-Mesen:
-  category: Retro Emulators
-  description: Emulador NES/Famicom de alta precisão
-  download_url: https://github.com/SourMesen/Mesen/releases/latest/download/Mesen.zip
   install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_mesen
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
   verify_actions:
-    - type: file_exists
-      path: 'emulators\mesen\Mesen.exe'
+  - path: emulators\nestopia\nestopia.exe
+    type: file_exists
 
-Mednafen:
+No$GBA:
   category: Retro Emulators
-  description: Emulador multi-sistema de alta precisão (inclui Saturn)
-  download_url: https://mednafen.github.io/releases/files/mednafen-1.32.1-win64.zip
+  custom_installer: retro_devkit_manager.install_emulator_no_gba
+  description: Emulador Game Boy Advance com debugging
+  download_url: https://problemkaputt.de/gba.htm
+  hash: f69eeee4a3eed64cf3510b2c494e9d02558f472d3ae63421605e3959d8d8f708
+  hash_algorithm: sha256
   install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_mednafen
+  verify_actions:
+  - path: emulators\no_gba\NO$GBA.EXE
+    type: file_exists
+PCSX-Redux:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_pcsx_redux
+  description: Emulador PlayStation 1 com foco em desenvolvimento
+  download_url: UNAVAILABLE
+  hash: UNAVAILABLE
+  hash_algorithm: sha256
+  install_method: none
+  post_install_message: PCSX-Redux is no longer available for download from its official GitHub repository. You may need to find an alternative source or build it from source.
+  verify_actions:
+  - path: emulators\pcsx-redux\pcsx-redux.exe
+    type: file_exists
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\pcsx-redux\pcsx-redux.exe
+    type: file_exists
+PSX Development Kit (PSn00bSDK):
+  category: Retro Development
+  custom_installer: retro_devkit_manager.install_psx
+  dependencies:
+  - Microsoft Visual C++ Redistributable
+  description: Kit de desenvolvimento para PlayStation 1
+  download_url: https://github.com/Lameguy64/PSn00bSDK/releases/download/v0.24/psn00bsdk-win32.zip
+  emulators:
+  - DuckStation
+  - PCSX-Redux
+  extensions:
+  - ms-vscode.cpptools
+  - webfreak.debug
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
+  install_method: custom
   verify_actions:
-    - type: file_exists
-      path: 'emulators\mednafen\mednafen.exe'
+  - path: retro_devkits\psx\psn00bsdk\bin\mipsel-none-elf-gcc.exe
+    type: file_exists
+  - path: retro_devkits\psx\psn00bsdk\include\psxgpu.h
+    type: file_exists
+Project64:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_project64
+  description: Emulador Nintendo 64 popular
+  download_url: https://www.pj64-emu.com/
+  hash: MANUAL_INSTALL_REQUIRED
+  hash_algorithm: sha256
+  install_method: none
+  post_install_message: Project64 must be downloaded and installed manually from https://www.pj64-emu.com/
+  verify_actions:
+  - path: emulators\project64\Project64.exe
+    type: file_exists
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\project64\Project64.exe
+    type: file_exists
+SGDK (Sega Genesis Development Kit):
+  category: Retro Development
+  conditional_dependencies:
+    editors:
+      condition: no_compatible_editor_detected
+      dependencies:
+      - Visual Studio Code
+      reason: Nenhum editor compatível detectado. VSCode será instalado para suporte
+        completo ao SGDK.
+  custom_installer: intelligent_sgdk_installer.install_sgdk
+  dependencies:
+  - Microsoft Visual C++ Redistributable
+  - Java Runtime Environment
+  - Make
+  description: Kit de desenvolvimento para Sega Mega Drive / Genesis com detecção
+    inteligente de editores
+  download_url: https://github.com/Stephane-D/SGDK/releases/download/v2.11/sgdk211.7z
+  emulators:
+  - Gens
+  - Fusion
+  - BlastEm
+  extensions_config:
+    minimal:
+    - zerasul.genesis-code
+    - ms-vscode.cpptools
+    vscode_compatible:
+    - zerasul.genesis-code
+    - ms-vscode.cpptools
+    - 13xforever.language-x86-64-assembly
+    - ms-vscode.hexeditor
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_method: custom
+  intelligent_install_features:
+  - Detecção automática de editores compatíveis
+  - Instalação condicional do VSCode
+  - Configuração automática de extensões
+  - Suporte para múltiplos editores (VSCode, Cursor, TRAE, etc.)
+  - Configuração otimizada baseada no editor detectado
+  notes: 'Este instalador usa detecção inteligente de editores para otimizar a experiência
+    de desenvolvimento:
 
+
+    🎯 DETECÇÃO AUTOMÁTICA:
+
+    - Verifica editores instalados no sistema
+
+    - Avalia compatibilidade com SGDK/Genesis Code
+
+    - Instala VSCode apenas se necessário
+
+
+    🔧 CONFIGURAÇÃO INTELIGENTE:
+
+    - Configura automaticamente o melhor editor disponível
+
+    - Instala extensões apropriadas para cada editor
+
+    - Otimiza configurações baseadas na compatibilidade
+
+
+    📦 INSTALAÇÃO CONDICIONAL:
+
+    - VSCode é instalado apenas se nenhum editor compatível for encontrado
+
+    - Editores parcialmente compatíveis recebem configuração manual
+
+    - Editores totalmente compatíveis são configurados automaticamente
+
+    '
+  supported_editors:
+    full_compatibility:
+    - Visual Studio Code
+    - Visual Studio Code Insiders
+    - Cursor IDE
+    - TRAE AI IDE
+    - VSCodium
+    minimal_compatibility:
+    - Notepad++
+    - UltraEdit
+    partial_compatibility:
+    - Sublime Text
+    - Atom
+    - Vim/Neovim
+    - Emacs
+    - Code::Blocks
+  verify_actions:
+  - path: retro_devkits\sgdk\bin\rescomp.jar
+    type: file_exists
+  - path: retro_devkits\sgdk\inc\genesis.h
+    type: file_exists
+  - path: retro_devkits\sgdk\bin\gcc\bin\m68k-elf-gcc.exe
+    type: file_exists
+SNES Development Kit (CC65):
+  category: Retro Development
+  custom_installer: retro_devkit_manager.install_snes
+  dependencies:
+  - Microsoft Visual C++ Redistributable
+  description: Kit de desenvolvimento para Super Nintendo usando CC65
+  download_url: https://github.com/cc65/cc65/releases/download/V2.19/cc65-snapshot-win32.zip
+  emulators:
+  - bsnes
+  - Snes9x
+  extensions:
+  - ms-vscode.cpptools
+  - 13xforever.language-x86-64-assembly
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: retro_devkits\snes\cc65\bin\cc65.exe
+    type: file_exists
+  - path: retro_devkits\snes\cc65\include\snes.h
+    type: file_exists
 SSF:
   category: Retro Emulators
-  description: Emulador Sega Saturn
-  download_url: http://www7a.biglobe.ne.jp/~phantasy/ssf/SSF_012_beta_R4.lzh
-  install_method: custom
   custom_installer: retro_devkit_manager.install_emulator_ssf
-  hash: HASH_PENDENTE_VERIFICACAO
+  description: Emulador Sega Saturn
+  download_url: https://github.com/shimazzz/SEGASaturnEmulator-SSF
+  hash: MANUAL_INSTALL_REQUIRED
   hash_algorithm: sha256
+  install_method: none
+  post_install_message: SSF must be downloaded and installed manually from https://github.com/shimazzz/SEGASaturnEmulator-SSF
   verify_actions:
-    - type: file_exists
-      path: 'emulators\ssf\SSF.exe'
-
-Kronos:
-  category: Retro Emulators
-  description: Emulador Sega Saturn moderno
-  download_url: https://github.com/FCare/Kronos/releases/latest/download/kronos_windows.zip
+  - path: emulators\ssf\SSF.exe
+    type: file_exists
+  hash_algorithm: sha256
   install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_kronos
-  hash: HASH_PENDENTE_VERIFICACAO
-  hash_algorithm: sha256
   verify_actions:
-    - type: file_exists
-      path: 'emulators\kronos\kronos.exe'
-
-Gens:
+  - path: emulators\ssf\SSF.exe
+    type: file_exists
+SameBoy:
   category: Retro Emulators
-  description: Emulador Sega Genesis/Mega Drive clássico
-  download_url: http://www.gens.me/downloads/gens-2.14.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_gens
+  custom_installer: retro_devkit_manager.install_emulator_sameboy
+  description: Emulador Game Boy de alta precisão
+  download_url: https://github.com/LIJI32/SameBoy/releases/download/v1.0.2/sameboy_winsdl.zip
+  hash: HASH_PENDENTE_VERIFICACAO
+Sega Saturn Development Kit (Jo-Engine + Yaul):
+  category: Retro Development
+  custom_installer: retro_devkit_manager.install_saturn
+  dependencies:
+  - Microsoft Visual C++ Redistributable
+  description: Kit de desenvolvimento para Sega Saturn
+  download_url: https://github.com/johannes-fetz/joengine/releases/download/V2025.1/joengine-win64.zip
+  emulators:
+  - Mednafen
+  - SSF
+  - Kronos
+  extensions:
+  - ms-vscode.cpptools
+  - 13xforever.language-x86-64-assembly
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
+  install_method: custom
   verify_actions:
-    - type: file_exists
-      path: 'emulators\gens\gens.exe'
-
-Fusion:
+  - path: retro_devkits\saturn\toolchain\bin\sh2-elf-gcc.exe
+    type: file_exists
+  - path: retro_devkits\saturn\joengine\jo\jo.h
+    type: file_exists
+Snes9x:
   category: Retro Emulators
-  description: Emulador Sega Genesis/Mega Drive de alta compatibilidade
-  download_url: https://www.carpeludum.com/download/fusion364.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_fusion
+  custom_installer: retro_devkit_manager.install_emulator_snes9x
+  description: Emulador SNES rápido e compatível
+  download_url: https://github.com/snes9xgit/snes9x/releases/download/1.63/snes9x-1.63-win32-x64.zip
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
+  install_method: custom
   verify_actions:
-    - type: file_exists
-      path: 'emulators\fusion\Fusion.exe'
-
-BlastEm:
+  - path: emulators\snes9x\snes9x-x64.exe
+    type: file_exists
+VBA-M:
   category: Retro Emulators
-  description: Emulador Sega Genesis/Mega Drive de alta precisão
-  download_url: https://www.retrodev.com/blastem/nightlies/blastem-win64-latest.zip
-  install_method: custom
-  custom_installer: retro_devkit_manager.install_emulator_blastem
+  custom_installer: retro_devkit_manager.install_emulator_vba_m
+  description: Emulador Game Boy Advance rápido
+  download_url: https://github.com/visualboyadvance-m/visualboyadvance-m/releases/download/v2.1.6/visualboyadvance-m-Win-x64.zip
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
+  install_method: custom
   verify_actions:
-    - type: file_exists
-      path: 'emulators\blastem\blastem.exe'
+  - path: emulators\vba-m\visualboyadvance-m.exe
+    type: file_exists
+bsnes:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_bsnes
+  description: Emulador SNES de alta precisão
+  download_url: https://github.com/bsnes-emu/bsnes/releases/download/v115/bsnes-windows.zip
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\bsnes\bsnes.exe
+    type: file_exists
+mGBA:
+  category: Retro Emulators
+  custom_installer: retro_devkit_manager.install_emulator_mgba
+  description: Emulador Game Boy Advance de alta precisão
+  download_url: https://github.com/mgba-emu/mgba/releases/download/0.11.1/mGBA-0.11.1-win64.7z
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
+  install_method: custom
+  verify_actions:
+  - path: emulators\mgba\mgba.exe
+    type: file_exists

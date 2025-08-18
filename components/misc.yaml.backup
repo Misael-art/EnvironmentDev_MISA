@@ -1,33 +1,42 @@
+# Componentes Diversos para Environment Dev Script
+# Este arquivo contém componentes que não se encaixam em outras categorias
+
 K-Lite Codec Pack:
   category: Multimedia
   description: Pacote de codecs de áudio e vídeo
   download_url: https://files3.codecguide.com/K-Lite_Codec_Pack_1915_Standard.exe
-  hash: 24354eb6371f851d81927634076152b07e0f87e0ccf97f58634691819e453385
-  hash_algorithm: sha256
-  install_args: /VERYSILENT /NORESTART
   install_method: exe
+  install_args: /VERYSILENT /NORESTART
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
   verify_actions:
-  - path: C:\Program Files (x86)\K-Lite Codec Pack
-    type: directory_exists
+    - type: directory_exists
+      path: 'C:\Program Files (x86)\K-Lite Codec Pack'
+
 PowerToys:
   category: Productivity
   description: Utilitários avançados da Microsoft para Windows
   download_url: https://github.com/microsoft/PowerToys/releases/download/v0.84.0/PowerToysSetup-0.84.0-x64.exe
+  install_method: exe
+  install_args: -silent
   hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
-  install_args: -silent
-  install_method: exe
   verify_actions:
-  - path: C:\Program Files\PowerToys\PowerToys.exe
-    type: file_exists
+    - type: file_exists
+      path: 'C:\Program Files\PowerToys\PowerToys.exe'
+
+# Definição movida para common_utils.yaml
+
+# Definição movida para backup_sync_windows.yaml
+
 VcXsrv:
   category: Utilities
   description: Servidor X para Windows (útil para WSL)
   download_url: https://downloads.sourceforge.net/project/vcxsrv/vcxsrv-64.1.20.14.0.installer.exe
-  hash: 2edd096e07ea5c0e5fd040d964c71a633ecf348155009d432cef89888da978b6
-  hash_algorithm: sha256
-  install_args: /silent
   install_method: exe
+  install_args: /silent
+  hash: HASH_PENDENTE_VERIFICACAO
+  hash_algorithm: sha256
   verify_actions:
-  - path: C:\Program Files\VcXsrv\vcxsrv.exe
-    type: file_exists
+    - type: file_exists
+      path: 'C:\Program Files\VcXsrv\vcxsrv.exe' 

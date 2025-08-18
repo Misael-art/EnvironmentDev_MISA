@@ -23,8 +23,8 @@ Mod Organizer 2 (MO2):
 Vortex (Nexus Mods Manager):
   category: Modding Tools (Windows)
   description: Gerenciador de mods oficial do Nexus Mods
-  download_url: https://github.com/Nexus-Mods/Vortex/releases/latest/download/Vortex-1.11.4-installer.exe
-  hash: HASH_NEEDS_UPDATE
+  download_url: https://github.com/Nexus-Mods/Vortex/releases/download/v1.14.11/Vortex%20Setup%201.14.11.exe
+  hash: HASH_PENDENTE_VERIFICACAO
   hash_algorithm: sha256
   install_args: /S
   install_method: exe
