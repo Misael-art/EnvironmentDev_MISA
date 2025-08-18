@@ -136,7 +136,7 @@ MAME:
   custom_installer: retro_devkit_manager.install_emulator_mame
   description: Emulador arcade multi-sistema (inclui Neo Geo)
   download_url: https://github.com/mamedev/mame/releases/download/mame0279/mame0279b_64bit.exe
-  hash: HASH_PENDENTE_VERIFICACAO
+  hash: 77d4039a89d8290db14570843ab58195fdcddccbbc533dbccb2e2a5eb875f6bb
   hash_algorithm: sha256
   install_method: custom
   verify_actions:
